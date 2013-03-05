@@ -1,4 +1,4 @@
-ev-moodle
-=========
+moodle-repository_ensemble
+==========================
 
-Ensemble Video Moodle Plugin
+Ensemble Video Moodle Repository Plugin

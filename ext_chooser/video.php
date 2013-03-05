@@ -51,14 +51,19 @@ require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '
                 $submit = $('.submit').hide();
 
             var submitHandler = function(e) {
-              var video = JSON.parse($video.val());
-              window.parent.M.core_filepicker.select_file({
-                  // Lame hack so file is accepted by Moodle
-                  title: encodeURIComponent(video.content.Title + '.avi'),
-                  source: '//plugin.moodle.ensemblevideo.com?' + $.param($video.val()),
-                  thumbnail: video.content.ThumbnailUrl
-              });
-              e.preventDefault;
+                var settings = JSON.parse($video.val());
+                var content = _.extend({}, settings.content);
+                // We don't need to persist content
+                delete settings['content'];
+                // Don't bother storing search either
+                delete settings['search'];
+                window.parent.M.core_filepicker.select_file({
+                    // Lame hack so file is accepted by Moodle
+                    title: encodeURIComponent(content.Title + '.avi'),
+                    source: '//plugin.moodle.ensemblevideo.com?' + $.param(settings),
+                    thumbnail: content.ThumbnailUrl
+                });
+                e.preventDefault;
             };
 
             $submit.click(submitHandler);

@@ -1,0 +1,768 @@
+/* normalize.css v1.0.1 | MIT License | git.io/normalize */
+/* normalize.css v1.0.1 | HTML5 Display Definitions | MIT License | git.io/normalize */
+/* line 19, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_html5.scss */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+nav,
+section,
+summary {
+  display: block;
+}
+
+/* line 27, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_html5.scss */
+audio,
+canvas,
+video {
+  display: inline-block;
+  *display: inline;
+  *zoom: 1;
+}
+
+/* line 38, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_html5.scss */
+audio:not([controls]) {
+  display: none;
+  height: 0;
+}
+
+/* line 45, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_html5.scss */
+[hidden] {
+  display: none;
+}
+
+/* normalize.css v1.0.1 | Base | MIT License | git.io/normalize */
+/* line 11, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_base.scss */
+html {
+  font-family: sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* line 19, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_base.scss */
+body {
+  margin: 0;
+}
+
+/* normalize.css v1.0.1 | Links | MIT License | git.io/normalize */
+/* line 9, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_links.scss */
+a:focus {
+  outline: thin dotted;
+}
+
+/* line 16, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_links.scss */
+a:active,
+a:hover {
+  outline: 0;
+}
+
+/* normalize.css v1.0.1 | Typography | MIT License | git.io/normalize */
+/* line 10, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+h1 {
+  font-size: 2em;
+}
+
+/* line 16, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+abbr[title] {
+  border-bottom: 1px dotted;
+}
+
+/* line 23, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+b,
+strong {
+  font-weight: bold;
+}
+
+/* line 28, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+blockquote {
+  margin: 1em 40px;
+}
+
+/* line 35, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+dfn {
+  font-style: italic;
+}
+
+/* line 41, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+mark {
+  background: #ff0;
+  color: #000;
+}
+
+/* line 50, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+p,
+pre {
+  margin: 1em 0;
+}
+
+/* line 60, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+code,
+kbd,
+pre,
+samp {
+  font-family: monospace, serif;
+  _font-family: "courier new", monospace;
+  font-size: 1em;
+}
+
+/* line 70, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+pre {
+  white-space: pre;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* line 78, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+q {
+  quotes: "\201C" "\201D" "\2018" "\2019";
+}
+
+/* line 87, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+q {
+  quotes: none;
+}
+
+/* line 92, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+q:before,
+q:after {
+  content: '';
+  content: none;
+}
+
+/* line 100, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+small {
+  font-size: 80%;
+}
+
+/* line 107, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+/* line 114, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+sup {
+  top: -0.5em;
+}
+
+/* line 118, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_typography.scss */
+sub {
+  bottom: -0.25em;
+}
+
+/* line 11, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_lists.scss */
+dl,
+menu,
+ol,
+ul {
+  margin: 1em 0;
+}
+
+/* line 15, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_lists.scss */
+dd {
+  margin: 0 0 0 40px;
+}
+
+/* line 23, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_lists.scss */
+menu,
+ol,
+ul {
+  padding: 0 0 0 40px;
+}
+
+/* line 30, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_lists.scss */
+nav ul,
+nav ol {
+  list-style: none;
+  list-style-image: none;
+}
+
+/* normalize.css v1.0.1 | Embedded Content | MIT License | git.io/normalize */
+/* line 9, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_embeds.scss */
+img {
+  border: 0;
+  -ms-interpolation-mode: bicubic;
+}
+
+/* line 18, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_embeds.scss */
+svg:not(:root) {
+  overflow: hidden;
+}
+
+/* normalize.css v1.0.1 | Figures | MIT License | git.io/normalize */
+/* line 9, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_figures.scss */
+figure {
+  margin: 0;
+}
+
+/* normalize.css v1.0.1 | Forms | MIT License | git.io/normalize */
+/* line 10, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+form {
+  margin: 0;
+}
+
+/* line 17, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+fieldset {
+  border: 1px solid silver;
+  margin: 0 2px;
+  padding: 0.35em 0.625em 0.75em;
+}
+
+/* line 30, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+legend {
+  border: 0;
+  padding: 0;
+  white-space: normal;
+  *margin-left: -7px;
+}
+
+/* line 49, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  margin: 0;
+  vertical-align: baseline;
+  *vertical-align: middle;
+}
+
+/* line 63, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+button,
+input {
+  line-height: normal;
+}
+
+/* line 80, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+button,
+html input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+  -webkit-appearance: button;
+  cursor: pointer;
+  *overflow: visible;
+}
+
+/* line 91, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+button[disabled],
+input[disabled] {
+  cursor: default;
+}
+
+/* line 103, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+input[type="checkbox"],
+input[type="radio"] {
+  box-sizing: border-box;
+  padding: 0;
+  *height: 13px;
+  *width: 13px;
+}
+
+/* line 116, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+input[type="search"] {
+  -webkit-appearance: textfield;
+  -moz-box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+/* line 127, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/* line 134, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/* line 142, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_forms.scss */
+textarea {
+  overflow: auto;
+  vertical-align: top;
+}
+
+/* normalize.css v1.0.1 | Tables | MIT License | git.io/normalize */
+/* line 9, ../../../../../../../var/lib/gems/1.9.1/gems/compass-normalize-1.4.2/stylesheets/normalize/_tables.scss */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* line 25, ../sass/ev-script.scss */
+.form-text,
+.form-select,
+.form-submit {
+  padding: 0.2em;
+}
+
+/* line 37, ../sass/ev-script.scss */
+.ev-video-picker {
+  padding: 0;
+}
+/* line 31, ../sass/ev-script.scss */
+.ev-video-picker a {
+  color: #0074bd;
+  text-decoration: none;
+}
+/* line 40, ../sass/ev-script.scss */
+.ev-video-picker div.ev-results td.content-actions {
+  min-width: 120px;
+}
+
+/* line 46, ../sass/ev-script.scss */
+.ev-playlist-picker {
+  padding: 0;
+}
+/* line 31, ../sass/ev-script.scss */
+.ev-playlist-picker a {
+  color: #0074bd;
+  text-decoration: none;
+}
+
+/* line 50, ../sass/ev-script.scss */
+div.ev-hider {
+  border-bottom: 1px solid #999999;
+  text-align: center;
+  width: 100%;
+}
+/* line 54, ../sass/ev-script.scss */
+div.ev-hider .action-logout {
+  float: right;
+  margin-left: -9.2em;
+  margin-right: 3em;
+  width: 4em;
+}
+/* line 60, ../sass/ev-script.scss */
+div.ev-hider a {
+  background: #ffffff;
+  background-color: #fbfbfb;
+  border-left: 1px solid #999999;
+  -moz-border-radius-topleft: 6px;
+  -webkit-border-top-left-radius: 6px;
+  border-top-left-radius: 6px;
+  -moz-border-radius-topright: 6px;
+  -webkit-border-top-right-radius: 6px;
+  border-top-right-radius: 6px;
+  border-right: 1px solid #999999;
+  border-top: 1px solid #999999;
+  bottom: -1px;
+  display: inline-block;
+  padding: 0 1em;
+  position: relative;
+  text-decoration: none;
+}
+
+/* line 75, ../sass/ev-script.scss */
+div.ev-field {
+  height: 60px;
+}
+/* line 77, ../sass/ev-script.scss */
+div.ev-field .thumbnail {
+  -webkit-box-shadow: 0 0 10px 1px;
+  -moz-box-shadow: 0 0 10px 1px;
+  box-shadow: 0 0 10px 1px;
+  display: inline-block;
+  font-size: 0;
+  height: 100%;
+  margin-right: 20px;
+  vertical-align: middle;
+}
+/* line 84, ../sass/ev-script.scss */
+div.ev-field .thumbnail img {
+  height: 100%;
+  vertical-align: middle;
+}
+/* line 89, ../sass/ev-script.scss */
+div.ev-field div.title {
+  color: #606060;
+  display: inline-block;
+  font-weight: bold;
+  margin-right: 20px;
+  max-width: 400px;
+}
+/* line 96, ../sass/ev-script.scss */
+div.ev-field div.logo {
+  display: inline-block;
+  height: 100%;
+  margin-right: 20px;
+  vertical-align: middle;
+}
+/* line 101, ../sass/ev-script.scss */
+div.ev-field div.logo a {
+  background-image: url("images/logo.png");
+  background-repeat: no-repeat;
+  background-size: 48px auto;
+  display: inline-block;
+  height: 48px;
+  margin-top: 6px;
+  width: 48px;
+}
+/* line 109, ../sass/ev-script.scss */
+div.ev-field div.logo a span {
+  display: none;
+}
+/* line 114, ../sass/ev-script.scss */
+div.ev-field div.ev-field-actions {
+  display: inline-block;
+  padding: 0.4em 0.6em;
+}
+/* line 117, ../sass/ev-script.scss */
+div.ev-field div.ev-field-actions a {
+  background-repeat: no-repeat;
+  background-size: 18px auto;
+  display: inline-block;
+  height: 18px;
+  margin: 0.3em;
+  vertical-align: middle;
+  width: 18px;
+}
+/* line 125, ../sass/ev-script.scss */
+div.ev-field div.ev-field-actions a span {
+  display: none;
+}
+/* line 129, ../sass/ev-script.scss */
+div.ev-field div.ev-field-actions .action-choose {
+  background-image: url("images/add.png");
+}
+/* line 132, ../sass/ev-script.scss */
+div.ev-field div.ev-field-actions .action-preview {
+  background-image: url("images/preview.png");
+}
+/* line 135, ../sass/ev-script.scss */
+div.ev-field div.ev-field-actions .action-options {
+  background-image: url("images/settings.png");
+}
+/* line 138, ../sass/ev-script.scss */
+div.ev-field div.ev-field-actions .action-remove {
+  background-image: url("images/remove.png");
+}
+
+/* line 145, ../sass/ev-script.scss */
+div.ev-search,
+div.ev-playlist-select {
+  background-color: #fbfbfb;
+  padding: 10px 5px 0 5px;
+  position: relative;
+  z-index: 10;
+}
+
+/* line 152, ../sass/ev-script.scss */
+div.ev-poweredby {
+  float: right;
+}
+/* line 154, ../sass/ev-script.scss */
+div.ev-poweredby a {
+  background: url("images/poweredby.png") no-repeat scroll center center transparent;
+  float: right;
+  height: 38px;
+  width: 120px;
+}
+/* line 159, ../sass/ev-script.scss */
+div.ev-poweredby a span {
+  display: none;
+}
+@media screen and (max-width: 620px) {
+  /* line 152, ../sass/ev-script.scss */
+  div.ev-poweredby {
+    display: none;
+  }
+}
+
+/* line 171, ../sass/ev-script.scss */
+div.ev-search label,
+div.ev-search input,
+div.ev-search select {
+  display: inline;
+  margin-right: 1em;
+}
+/* line 175, ../sass/ev-script.scss */
+div.ev-search label {
+  color: #606060;
+}
+@media screen and (max-width: 750px) {
+  /* line 175, ../sass/ev-script.scss */
+  div.ev-search label {
+    display: block;
+    margin: 0.4em 0;
+  }
+}
+/* line 182, ../sass/ev-script.scss */
+div.ev-search div.loader {
+  display: inline-block;
+}
+/* line 185, ../sass/ev-script.scss */
+div.ev-search div.loading {
+  background: url("images/loading.gif") no-repeat scroll center center transparent;
+  display: inline-block;
+  height: 16px;
+  margin-left: 1em;
+  vertical-align: middle;
+  width: 16px;
+}
+
+/* line 171, ../sass/ev-script.scss */
+div.ev-playlist-select label,
+div.ev-playlist-select input,
+div.ev-playlist-select select {
+  display: inline;
+  margin-right: 1em;
+}
+/* line 175, ../sass/ev-script.scss */
+div.ev-playlist-select label {
+  color: #606060;
+}
+@media screen and (max-width: 850px) {
+  /* line 175, ../sass/ev-script.scss */
+  div.ev-playlist-select label {
+    display: block;
+    margin: 0.4em 0;
+  }
+}
+/* line 182, ../sass/ev-script.scss */
+div.ev-playlist-select div.loader {
+  display: inline-block;
+}
+/* line 185, ../sass/ev-script.scss */
+div.ev-playlist-select div.loading {
+  background: url("images/loading.gif") no-repeat scroll center center transparent;
+  display: inline-block;
+  height: 16px;
+  margin-left: 1em;
+  vertical-align: middle;
+  width: 16px;
+}
+
+/* line 204, ../sass/ev-script.scss */
+div.ev-auth div.logo {
+  background-image: url("images/logo.png");
+  background-repeat: no-repeat;
+  background-size: 65px auto;
+  display: inline-block;
+  height: 65px;
+  margin-right: 2em;
+  margin-top: 1em;
+  vertical-align: top;
+  width: 65px;
+}
+/* line 215, ../sass/ev-script.scss */
+div.ev-auth form {
+  display: inline-block;
+  padding-right: 2em;
+  padding-top: 1em;
+}
+/* line 220, ../sass/ev-script.scss */
+div.ev-auth fieldset {
+  border: none;
+  padding: 0;
+  text-align: right;
+}
+/* line 225, ../sass/ev-script.scss */
+div.ev-auth div.fieldWrap {
+  margin-bottom: 1em;
+}
+/* line 229, ../sass/ev-script.scss */
+div.ev-auth div.form-actions input {
+  margin: 0;
+}
+/* line 233, ../sass/ev-script.scss */
+div.ev-auth label {
+  color: #606060;
+  display: inline-block;
+  margin-right: 2em;
+}
+
+/* line 241, ../sass/ev-script.scss */
+div.ev-settings fieldset {
+  border: none;
+  padding: 0;
+}
+/* line 245, ../sass/ev-script.scss */
+div.ev-settings div.fieldWrap {
+  margin-bottom: 1em;
+}
+/* line 248, ../sass/ev-script.scss */
+div.ev-settings label {
+  color: #606060;
+  display: inline-block;
+  width: 40%;
+}
+/* line 253, ../sass/ev-script.scss */
+div.ev-settings div.form-actions {
+  clear: both;
+  float: left;
+}
+
+/* line 259, ../sass/ev-script.scss */
+div.ev-results {
+  background-color: #fbfbfb;
+  border-bottom: 1px solid #cccccc;
+  padding: 10px 5px;
+}
+/* line 263, ../sass/ev-script.scss */
+div.ev-results .total {
+  margin: 1em 0;
+}
+/* line 266, ../sass/ev-script.scss */
+div.ev-results table thead {
+  display: none;
+}
+/* line 269, ../sass/ev-script.scss */
+div.ev-results td.content-actions {
+  margin: 10px;
+  padding-right: 2em;
+  text-align: right;
+  width: 25%;
+}
+/* line 274, ../sass/ev-script.scss */
+div.ev-results td.content-actions img {
+  -webkit-box-shadow: 0 0 10px 1px;
+  -moz-box-shadow: 0 0 10px 1px;
+  box-shadow: 0 0 10px 1px;
+  display: block;
+  float: right;
+  margin: 9px 6px 1em 6px;
+  max-width: 150px;
+  width: 80%;
+}
+/* line 282, ../sass/ev-script.scss */
+div.ev-results td.content-actions div.action-links {
+  clear: right;
+  float: right;
+  height: 18px;
+  margin: 6px;
+  max-width: 150px;
+  text-align: center;
+  width: 80%;
+}
+/* line 290, ../sass/ev-script.scss */
+div.ev-results td.content-actions div.action-links a {
+  background-repeat: no-repeat;
+  background-size: 18px auto;
+  display: inline-block;
+  height: 18px;
+  margin: 0 0.3em;
+  width: 18px;
+}
+/* line 297, ../sass/ev-script.scss */
+div.ev-results td.content-actions div.action-links a span {
+  display: none;
+}
+/* line 301, ../sass/ev-script.scss */
+div.ev-results td.content-actions div.action-links a.action-add {
+  background-image: url("images/add.png");
+}
+/* line 304, ../sass/ev-script.scss */
+div.ev-results td.content-actions div.action-links a.action-preview {
+  background-image: url("images/preview.png");
+}
+/* line 309, ../sass/ev-script.scss */
+div.ev-results .content-meta {
+  width: 75%;
+}
+/* line 312, ../sass/ev-script.scss */
+div.ev-results table {
+  font-size: 1em;
+}
+/* line 315, ../sass/ev-script.scss */
+div.ev-results .content-list {
+  border: 1px solid #bebfb9;
+  margin: 0 0 10px;
+  width: 100%;
+}
+/* line 319, ../sass/ev-script.scss */
+div.ev-results .content-list .even {
+  background-color: #f3f4ee;
+}
+/* line 322, ../sass/ev-script.scss */
+div.ev-results .content-list tr td {
+  border: none;
+  padding-bottom: 1em;
+  color: #000000;
+  padding: 1em 2%;
+}
+/* line 328, ../sass/ev-script.scss */
+div.ev-results .content-list .content-item {
+  border: none;
+  width: 100%;
+}
+/* line 331, ../sass/ev-script.scss */
+div.ev-results .content-list .content-item td {
+  border: none;
+  padding: 3px 0;
+}
+/* line 335, ../sass/ev-script.scss */
+div.ev-results .content-list .content-item tr.title td {
+  border-bottom: 1px solid #999999;
+  font-weight: bold;
+}
+/* line 339, ../sass/ev-script.scss */
+div.ev-results .content-list .content-item .desc a {
+  margin-left: 5px;
+}
+/* line 342, ../sass/ev-script.scss */
+div.ev-results .content-list .content-item .label {
+  color: #606060;
+  font-weight: bold;
+  width: 20%;
+  min-width: 100px;
+}
+@media screen and (max-width: 600px) {
+  /* line 342, ../sass/ev-script.scss */
+  div.ev-results .content-list .content-item .label {
+    display: none;
+  }
+}
+
+/* line 355, ../sass/ev-script.scss */
+div.ev-video-picker div.ev-results .content-list tr td {
+  vertical-align: top;
+}
+
+/* line 359, ../sass/ev-script.scss */
+div.scrollWrap .loader {
+  background: url("images/loader.gif") no-repeat scroll center center transparent;
+  height: 60px;
+  width: 100%;
+}
+
+/* line 365, ../sass/ev-script.scss */
+div.ev-dialog {
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  -ms-border-radius: 6px;
+  -o-border-radius: 6px;
+  border-radius: 6px;
+  font-size: 1em;
+}
+/* line 368, ../sass/ev-script.scss */
+div.ev-dialog div.ui-dialog-titlebar {
+  background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #f9d700), color-stop(100%, #ffffff));
+  background: -webkit-linear-gradient(#f9d700, #ffffff);
+  background: -moz-linear-gradient(#f9d700, #ffffff);
+  background: -o-linear-gradient(#f9d700, #ffffff);
+  background: linear-gradient(#f9d700, #ffffff);
+  -moz-border-radius-topleft: 6px;
+  -webkit-border-top-left-radius: 6px;
+  border-top-left-radius: 6px;
+  -moz-border-radius-topright: 6px;
+  -webkit-border-top-right-radius: 6px;
+  border-top-right-radius: 6px;
+  border-width: 0;
+}
+
+/* line 375, ../sass/ev-script.scss */
+.sticky-header {
+  z-index: 100;
+}

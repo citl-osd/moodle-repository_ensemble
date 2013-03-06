@@ -55,13 +55,14 @@ require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '
             var submitHandler = function(e) {
                 var settings = JSON.parse($content.val());
                 var content = _.extend({}, settings.content);
+                var title = content.Title || content.Name || 'untitled';
                 // We don't need to persist content
                 delete settings['content'];
                 // Don't bother storing search either
                 delete settings['search'];
                 window.parent.M.core_filepicker.select_file({
                     // Lame hack so file is accepted by Moodle
-                    title: encodeURIComponent(content.Title + '.avi'),
+                    title: title + '.avi',
                     source: '//plugin.moodle.ensemblevideo.com?' + $.param(settings),
                     thumbnail: content.ThumbnailUrl
                 });

@@ -13,19 +13,22 @@ $authDomain  = get_config('ensemble', 'authDomain');
 
 // Fail if we're missing our required urls
 if (empty($ensembleURL) || empty($api_url)) {
-    header('Missing url parameter', true, 400);
+    header('Bad Request', true, 400);
+    print('Missing "request" parameter');
     exit;
 }
 
 // Fail if our service account isn't configured
 if (empty($serviceUser) || empty($servicePass)) {
-    header('Missing service account configuration', true, 400);
+    header('Bad Request', true, 400);
+    print('Missing service account configuration');
     exit;
 }
 
 // Only service requests for our configured ensemble url
 if (preg_match('#^' . preg_quote($ensembleURL) . '#i', $api_url) !== 1) {
-    header('URL mismatch', true, 400);
+    header('Bad Request', true, 400);
+    print('URL mismatch');
     exit;
 }
 

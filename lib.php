@@ -34,8 +34,8 @@ class repository_ensemble extends repository {
     $mform->addElement('static', null, '', get_string('typeHelp', 'repository_ensemble'));
   }
 
-  public static function type_instance_option_names() {
-    return array('ensembleURL', 'serviceUser', 'servicePass');
+  public static function get_type_option_names() {
+    return array('ensembleURL', 'serviceUser', 'servicePass', 'authDomain');
   }
 
   public static function type_config_form($mform, $classname = 'repository') {
@@ -51,6 +51,10 @@ class repository_ensemble extends repository {
     if (empty($servicePass)){
       $servicePass = '';
     }
+    $authDomain = get_config('ensemble', 'authDomain');
+    if (empty($authDomain)){
+      $authDomain = '';
+    }
 
     $required = get_string('required');
     $mform->addElement('text', 'ensembleURL', get_string('ensembleURL', 'repository_ensemble'), array('value' => $ensembleURL, 'size' => '40'));
@@ -62,11 +66,13 @@ class repository_ensemble extends repository {
     $mform->addElement('passwordunmask', 'servicePass', get_string('servicePass', 'repository_ensemble'), array('value' => $servicePass, 'size' => '40'));
     $mform->addRule('servicePass', $required, 'required', null, 'client');
     $mform->addElement('static', null, '', get_string('servicePassHelp', 'repository_ensemble'));
+    $mform->addElement('text', 'authDomain', get_string('authDomain', 'repository_ensemble'), array('value' => $authDomain, 'size' => '40'));
+    $mform->addElement('static', null, '', get_string('authDomainHelp', 'repository_ensemble'));
   }
 
   public static function plugin_init() {
-    $videoRepoId = repository::static_function('ensemble', 'create', 'ensemble', 0, get_system_context(), array('name' => get_string('videoRepo', 'repository_ensemble'), 'evtype' => 'video'), 1);
-    $playlistRepoId = repository::static_function('ensemble', 'create', 'ensemble', 0, get_system_context(), array('name' => get_string('playlistRepo', 'repository_ensemble'), 'evtype' => 'playlist'), 1);
+    $videoRepoId = repository::static_function('ensemble', 'create', 'ensemble', 0, get_system_context(), array('name' => get_string('videoRepo', 'repository_ensemble'), 'evtype' => 'video'), 0);
+    $playlistRepoId = repository::static_function('ensemble', 'create', 'ensemble', 0, get_system_context(), array('name' => get_string('playlistRepo', 'repository_ensemble'), 'evtype' => 'playlist'), 0);
     return !empty($videoRepoId) && !empty($playlistRepoId);
   }
 

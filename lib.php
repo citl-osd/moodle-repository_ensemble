@@ -25,108 +25,53 @@
 
 class repository_ensemble extends repository {
 
-  // Declare vars here
-  private $ensembleURL;
-  private $destinationID;
-  private $defaultID;
-  private $defaultName;
-
-  /*****************
-   * This block manages all of the administrative pages and configuration
-   * *****************/
-
   public static function get_instance_option_names() {
-    // Lists what needs to be provided by admin for each course instance
-    return array('name','destinationID');
+    return array('evtype');
   }
 
   public static function instance_config_form($mform) {
-    // Prints out the form for admin to give stuff from
-    // get_instance_option_names return val
-    $strrequired = get_string('required');
-    $mform->addElement('text','destinationID',get_string('destinationID', 'repository_ensemble'), array('size'=>'40'));
-    $mform->addRule('destinationID',$strrequired,'required',null,'client');
-    return true;
+    $select = $mform->addElement('select', 'evtype', get_string('type', 'repository_ensemble'), array('video' => get_string('video', 'repository_ensemble'), 'playlist' => get_string('playlist', 'repository_ensemble')));
+    $mform->addElement('static', null, '', get_string('typeHelp', 'repository_ensemble'));
   }
 
-  public static function instance_form_validation($mform, $data, $errors) {
-    // For validating the admin's input to the config form
-    // For now, just checking that it's non-empty
-    // But it should maybe make an API call down the road if we
-    // ensure that every destination is pre-loaded with some video
-    // checking for a non-empty response or something else what's sane
-    if (empty($data['destinationID'])) {
-      $errors['destinationID'] = get_string('invalidDestinationID','repository_ensemble');
-      }
-    return $errors;
-  }
-
-  public static function get_type_option_names() {
-    // This is where we set global repository variables, shared
-    // by all course instances
-    // Here it's a URL to the ensemble server's simpleAPI interface
-    // and a default destinationID (probably to a set of moodle tutorial videos)
-    return array('ensembleURL','defaultName','defaultID');
+  public static function type_instance_option_names() {
+    return array('ensembleURL', 'serviceUser', 'servicePass');
   }
 
   public static function type_config_form($mform, $classname = 'repository') {
-    // Prints out a form to collect type_options from admin
-    $ensembleURL = get_config('ensembleURL');
+    $ensembleURL = get_config('ensemble', 'ensembleURL');
     if (empty($ensembleURL)){
       $ensembleURL = '';
     }
-    $defaultID = get_config('defaultID');
-    if (empty($defaultID)){
-      $defaultID = '';
+    $serviceUser = get_config('ensemble', 'serviceUser');
+    if (empty($serviceUser)){
+      $serviceUser = '';
     }
-    $defaultName = get_config('defaultName');
-    if (empty($defaultName)) {
-      $defaultName = '';
+    $servicePass = get_config('ensemble', 'servicePass');
+    if (empty($servicePass)){
+      $servicePass = '';
     }
 
-    $strrequired = get_string('required');
-    $mform->addElement('static',null,'',get_string('ensembleURLHelp','repository_ensemble'));
-    $mform->addElement('text','ensembleURL',get_string('ensembleURL', 'repository_ensemble'), array('value'=>$ensembleURL,'size' => '40'));
-    $mform->addRule('ensembleURL',$strrequired,'required',null,'client');
-    $mform->addElement('text','defaultName',get_string('defaultName','repository_ensemble'), array('value'=>$defaultName,'size' => '40'));
-    $mform->addRule('defaultName', $strrequired, 'required', null, 'client');
-    $mform->addElement('static',null,'',get_string('defaultIDHelp','repository_ensemble'));
-    $mform->addElement('text','defaultID', get_string('defaultID','repository_ensemble'), array('value'=>$defaultID,'size'=>'40'));
-    $mform->addRule('defaultID', $strrequired, 'required', null, 'client');
-  }
-
-  public static function type_form_validation($mform, $data, $errors) {
-    // A little bit of trivial baby-sitting
-    if (empty($data['ensembleURL'])) {
-      $errors['ensembleURL'] = 'I really need to know where it is';
-    } elseif (empty($data['defaultID'])) {
-      $errors['defaultID'] = 'A default destination is required!';
-    } elseif (empty($data['defaultName'])) {
-      $errors['defaultName'] = 'You should name the default repo';
-    }
-    return $errors;
+    $required = get_string('required');
+    $mform->addElement('text', 'ensembleURL', get_string('ensembleURL', 'repository_ensemble'), array('value' => $ensembleURL, 'size' => '40'));
+    $mform->addRule('ensembleURL', $required, 'required', null, 'client');
+    $mform->addElement('static', null, '', get_string('ensembleURLHelp', 'repository_ensemble'));
+    $mform->addElement('text', 'serviceUser', get_string('serviceUser', 'repository_ensemble'), array('value' => $serviceUser, 'size' => '40'));
+    $mform->addRule('serviceUser', $required, 'required', null, 'client');
+    $mform->addElement('static', null, '', get_string('serviceUserHelp', 'repository_ensemble'));
+    $mform->addElement('passwordunmask', 'servicePass', get_string('servicePass', 'repository_ensemble'), array('value' => $servicePass, 'size' => '40'));
+    $mform->addRule('servicePass', $required, 'required', null, 'client');
+    $mform->addElement('static', null, '', get_string('servicePassHelp', 'repository_ensemble'));
   }
 
   public static function plugin_init() {
-    // Creates a default instance when the repo plugin is created by admin
-    // This default will show up for all courses, so make it a good one
-    $id = repository::static_function('ensemble','create','ensemble',0,get_system_context(),array('name' => get_config('ensemble','defaultName'),'destinationID' => get_config('ensemble','defaultID')),1);
-    if (empty($id)) {
-       return false;
-    } else {
-      return true;
-    }
+    $videoRepoId = repository::static_function('ensemble', 'create', 'ensemble', 0, get_system_context(), array('name' => get_string('videoRepo', 'repository_ensemble'), 'evtype' => 'video'), 1);
+    $playlistRepoId = repository::static_function('ensemble', 'create', 'ensemble', 0, get_system_context(), array('name' => get_string('playlistRepo', 'repository_ensemble'), 'evtype' => 'playlist'), 1);
+    return !empty($videoRepoId) && !empty($playlistRepoId);
   }
 
-  /***************
-   * Now the repository code, interfacing moodle with ensemble as configured in
-   * the type configuration
-   */
-
   public function __construct($repositoryid, $context = SYSCONTEXTID, $options = array()) {
-    // Constructor needs to grab the parameters set by admin
-    $this->ensembleURL = get_config('ensemble','ensembleURL');
-    parent::__construct($repositoryid, $context,$options);
+    parent::__construct($repositoryid, $context, $options);
   }
 
   public function get_listing($path='', $page='0') {
@@ -134,7 +79,7 @@ class repository_ensemble extends repository {
     $list = array();
     $list['object'] = array();
     $list['object']['type'] = 'text/html';
-    $list['object']['src'] = $CFG->wwwroot . '/repository/ensemble/ext_chooser/video.php';
+    $list['object']['src'] = $CFG->wwwroot . '/repository/ensemble/ext_chooser/index.php?type=' . $this->options['evtype'];
     $list['nologin']  = true;
     $list['nosearch'] = true;
     $list['norefresh'] = true;
@@ -142,15 +87,11 @@ class repository_ensemble extends repository {
   }
 
   public function supported_filetypes() {
-    // see filelib.php &get_mimetypes_array()
-    // allows links with .mp4 at the end.
     return array('video');
   }
 
   public function supported_returntypes() {
-    // We're returning external file references, not pointers to content on moodle
     return FILE_EXTERNAL;
   }
 
-// End of class
 }

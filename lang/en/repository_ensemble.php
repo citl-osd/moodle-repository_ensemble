@@ -1,17 +1,17 @@
 <?php
 
-// Langauge file for the Ensemble repository for accessing the Ensemble
-// server.
-//
-//
-$string['pluginname'] = 'Ensemble Video';
-$string['search'] = 'Search public videos';
-$string['ensemble:view'] = 'Use Ensemble Video in file picker';
-$string['configplugin'] = 'Ensemble Video repository type configuration';
-$string['ensembleURL'] = 'URL for ensemble server simpleAPI';
-$string['destinationID'] = 'Destination ID';
-$string['invalidDestinationID'] = 'The DestinationID provided is not registered on the Ensemble server';
-$string['ensembleURLHelp'] = '<div>The URL for your Ensemble server\'s simpleAPI interface, e.g. https://ensemble.illinois.edu/app/simpleAPI</div>';
-$string['defaultIDHelp'] = '<div>A repository you want available to everyone in the system: a global destinationID for all public content or moodle tutorial videos</div>';
-$string['defaultID'] = 'Default DestinationID';
-$string['defaultName'] = 'Default Repository Name';
+$string['video']            = 'Video';
+$string['playlist']         = 'Playlist';
+$string['videoRepo']        = 'Ensemble Videos';
+$string['playlistRepo']     = 'Ensemble Playlists';
+$string['pluginname']       = 'Ensemble Video';
+$string['configplugin']     = 'Ensemble Video repository configuration';
+$string['ensemble:view']    = 'Use Ensemble Video repository in file picker';
+$string['ensembleURL']      = 'Ensemble URL';
+$string['ensembleURLHelp']  = '<div>The URL for the application root of your Ensemble Video installation, e.g. https://cloud.ensemblevideo.com</div>';
+$string['serviceUser']      = 'Service Account Username';
+$string['serviceUserHelp']  = '<div>The Ensemble Video service account username.</div>';
+$string['servicePass']      = 'Service Account Password';
+$string['servicePassHelp']  = '<div>The Ensemble Video service account password.</div>';
+$string['type']             = 'Repository Type';
+$string['typeHelp']         = '<div>The type of Ensemble Video content this repository makes available.</div>';

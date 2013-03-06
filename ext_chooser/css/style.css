@@ -27,13 +27,17 @@ div.ev-results {
     padding-top: 0;
 }
 
-div.ev-search {
+div.ev-search,
+div.ev-playlist-select {
     padding-top: 0;
 }
 
 div.ev-search label,
+div.ev-playlist-select label,
 div.ev-search input,
-div.ev-search select {
+div.ev-search select,
+div.ev-playlist-select select
+{
     display: inline;
 }
 
@@ -48,9 +52,4 @@ div.ev-dialog div.ui-dialog-titlebar {
 
 .submit {
     display: inline;
-}
-
-.ev-video-picker,
-.ev-playlist-picker {
-    margin-bottom: 1em;
 }

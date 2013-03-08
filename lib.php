@@ -93,7 +93,7 @@ class repository_ensemble extends repository {
   }
 
   public function supported_filetypes() {
-    return array('video');
+    return '*';
   }
 
   public function supported_returntypes() {

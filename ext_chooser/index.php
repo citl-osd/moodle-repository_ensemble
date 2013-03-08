@@ -53,19 +53,29 @@ require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '
                 $submit = $('.submit').hide();
 
             var submitHandler = function(e) {
-                var settings = JSON.parse($content.val());
-                var content = _.extend({}, settings.content);
-                var title = content.Title || content.Name || 'untitled';
+                var settings = JSON.parse($content.val()),
+                    content = _.extend({}, settings.content),
+                    title = content.Title || content.Name || 'untitled',
+                    filepicker = window.parent.M.core_filepicker.active_filepicker;
                 // We don't need to persist content
                 delete settings['content'];
                 // Don't bother storing search either
                 delete settings['search'];
-                window.parent.M.core_filepicker.select_file({
+                filepicker.select_file({
                     // Lame hack so file is accepted by Moodle
-                    title: title + '.avi',
+                    title: title, // + '.avi',
                     source: '//plugin.moodle.ensemblevideo.com?' + $.param(settings),
-                    thumbnail: content.ThumbnailUrl
+                    thumbnail: content.ThumbnailUrl || '<?= $CFG->wwwroot . "/repository/ensemble/ext_chooser/css/images/logo.png" ?>'
                 });
+                var $filepickerSelect = $("#filepicker-select-" + filepicker.options.client_id, window.parent.document);
+                var $titleField = $('.fp-saveas input', $filepickerSelect);
+                // Hide auther and license fields
+                $('.fp-setauthor', $filepickerSelect).hide();
+                $('.fp-setlicense', $filepickerSelect).hide();
+                // Hide the field and add an arbitrary video file extension so this passes mimetype check
+                $titleField.hide().val(title + '.avi');
+                // Show our original title
+                $titleField.before('<span>' + title + '</span>');
                 e.preventDefault;
             };
 
@@ -80,6 +90,8 @@ require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '
             });
 
             $(document).ready(function() {
+                // Hide the navbar as it's unused
+                $('.fp-navbar', window.parent.document).hide();
                 if (type === 'video') {
                     app.handleField($('#content').parent(), new EV.VideoSettings(), '#content');
                 } else if (type === 'playlist') {

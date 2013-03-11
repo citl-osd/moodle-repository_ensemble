@@ -11,6 +11,10 @@ div.ev-field {
     display: inline-block;
 }
 
+div.ev-field div.logo {
+    display: none;
+}
+
 div.ev-hider {
     display: none;
 }

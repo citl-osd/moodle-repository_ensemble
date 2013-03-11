@@ -35,13 +35,14 @@ $ensembleUrl = get_config('ensemble', 'ensembleUrl');
 
             'use strict';
 
-            var proxyPath = '<?= $CFG->wwwroot . "/repository/ensemble/ext_chooser/proxy.php" ?>',
+            var wwwroot = window.parent.M.cfg.wwwroot,
+                proxyPath = wwwroot + '/repository/ensemble/ext_chooser/proxy.php',
                 ensembleUrl = '<?= $ensembleUrl ?>',
                 type = $.deparam.querystring().type,
                 app = new EV.EnsembleApp({
                     ensembleUrl: ensembleUrl,
                     authId: 'ev-moodle',
-                    authPath: '<?= $CFG->wwwroot ?>',
+                    authPath: wwwroot,
                     pageSize: 100,
                     scrollHeight: 300,
                     proxyPath: proxyPath,
@@ -63,13 +64,13 @@ $ensembleUrl = get_config('ensemble', 'ensembleUrl');
                         filepicker = window.parent.M.core_filepicker.active_filepicker;
 
                     title = content.Title || content.Name;
-                    thumbnail = content.ThumbnailUrl || '<?= $CFG->wwwroot . "/repository/ensemble/ext_chooser/css/images/logo.png" ?>';
+                    thumbnail = content.ThumbnailUrl || wwwroot + '/repository/ensemble/ext_chooser/css/images/logo.png" ?>';
                     // We don't need to persist content
                     delete settings['content'];
                     // Don't bother storing search either
                     delete settings['search'];
                     var callback = function(ed, arg) {
-                        if (arg.content.indexOf(pluginDomain) !== -1 && arg.content.indexOf('ev-thumb') !== -1) {
+                        if (arg.content.indexOf(pluginDomain) !== -1 && arg.content.indexOf('ev-thumb') === -1) {
                             // Not bothering to escape '.' in pluginDomain below
                             var regex = new RegExp('>' + pluginDomain + '[^<]*<');
                             arg.content = arg.content.replace(regex, '><img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/><');

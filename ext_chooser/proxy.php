@@ -1,32 +1,24 @@
 <?php
 
-require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '/config.php');
+define('AJAX_SCRIPT', true);
+
+require_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/config.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/lib.php');
 require_once($CFG->libdir . '/moodlelib.php');
 require_once('Zend/Http/Client.php');
 
-$api_url = !empty($_GET['request']) ? urldecode($_GET['request']) : '';
+$api_url        = urldecode(required_param('request', PARAM_RAW));
+$repo_id        = required_param('repo_id', PARAM_INT);  // Repository ID
+$contextid      = required_param('ctx_id', PARAM_INT);   // Context ID
 
-$ensembleURL = get_config('ensemble', 'ensembleURL');
-$serviceUser = get_config('ensemble', 'serviceUser');
-$servicePass = get_config('ensemble', 'servicePass');
-$authDomain  = get_config('ensemble', 'authDomain');
-
-// Fail if we're missing our required urls
-if (empty($ensembleURL) || empty($api_url)) {
-    header('Bad Request', true, 400);
-    print('Missing "request" parameter');
-    exit;
-}
-
-// Fail if our service account isn't configured
-if (empty($serviceUser) || empty($servicePass)) {
-    header('Bad Request', true, 400);
-    print('Missing service account configuration');
-    exit;
-}
+$repo           = repository::get_repository_by_id($repo_id, $contextid);
+$ensembleUrl    = $repo->options['ensembleURL'];
+$serviceUser    = $repo->options['serviceUser'];
+$servicePass    = $repo->options['servicePass'];
+$authDomain     = $repo->options['authDomain'];
 
 // Only service requests for our configured ensemble url
-if (preg_match('#^' . preg_quote($ensembleURL) . '#i', $api_url) !== 1) {
+if (preg_match('#^' . preg_quote($ensembleUrl) . '#i', $api_url) !== 1) {
     header('Bad Request', true, 400);
     print('URL mismatch');
     exit;

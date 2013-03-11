@@ -1,8 +1,15 @@
 <?php
 
-require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '/config.php');
+require_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/config.php');
+require_once(dirname(dirname(dirname(__FILE__))) . '/lib.php');
 
-$ensembleUrl = get_config('ensemble', 'ensembleUrl');
+$repo_id   = required_param('repo_id', PARAM_INT);  // Repository ID
+$contextid = required_param('ctx_id', PARAM_INT);   // Context ID
+
+$repo = repository::get_repository_by_id($repo_id, $contextid);
+
+$ensembleUrl = $repo->options['ensembleURL'];
+$evtype = $repo->options['evtype'];
 
 ?>
 <!doctype html>
@@ -26,7 +33,6 @@ $ensembleUrl = get_config('ensemble', 'ensembleUrl');
     <script src="js/jquery/jquery.min.js?v=1.8.3"></script>
     <script src="js/jquery-ui/jquery-ui.min.js?v=1.8.23"></script>
     <script src="js/jquery.cookie/jquery.cookie.js?v=1.3.1"></script>
-    <script src="js/jquery.ba-bbq/jquery.ba-bbq.min.js?v=1.3pre"></script>
     <script src="js/lodash/lodash.min.js?v=0.9.2"></script>
     <script src="js/backbone/backbone-min.js?v=0.9.2"></script>
     <script src="js/ev-script.min.js?v=20130310"></script>
@@ -38,7 +44,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleUrl');
             var wwwroot = window.parent.M.cfg.wwwroot,
                 proxyPath = wwwroot + '/repository/ensemble/ext_chooser/proxy.php',
                 ensembleUrl = '<?= $ensembleUrl ?>',
-                type = $.deparam.querystring().type,
+                type = '<?= $evtype ?>',
                 app = new EV.EnsembleApp({
                     ensembleUrl: ensembleUrl,
                     authId: 'ev-moodle',
@@ -47,7 +53,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleUrl');
                     scrollHeight: 300,
                     proxyPath: proxyPath,
                     urlCallback: function(url) {
-                        return proxyPath + '?request=' + encodeURIComponent(url);
+                        return proxyPath + '?request=' + encodeURIComponent(url) + '&repo_id=<?= $repo_id ?>&ctx_id=<?= $contextid ?>';
                     },
                 }),
                 $form = $('form'),
@@ -56,23 +62,20 @@ $ensembleUrl = get_config('ensemble', 'ensembleUrl');
                 submitHandler = function(e) {
                     var settings = JSON.parse($content.val()),
                         content = _.extend({}, settings.content),
-                        // This is entirely arbitrary and doesn't actually point to anything.
-                        pluginDomain = 'plugin.moodle.ensemblevideo.com',
                         title = '',
                         thumbnail = '',
                         beforeSet = window.parent.tinymce.activeEditor.selection.onBeforeSetContent,
                         filepicker = window.parent.M.core_filepicker.active_filepicker;
 
                     title = content.Title || content.Name;
-                    thumbnail = content.ThumbnailUrl || wwwroot + '/repository/ensemble/ext_chooser/css/images/logo.png" ?>';
+                    thumbnail = content.ThumbnailUrl || wwwroot + '/repository/ensemble/ext_chooser/css/images/logo.png';
                     // We don't need to persist content
                     delete settings['content'];
                     // Don't bother storing search either
                     delete settings['search'];
                     var callback = function(ed, arg) {
-                        if (arg.content.indexOf(pluginDomain) !== -1 && arg.content.indexOf('ev-thumb') === -1) {
-                            // Not bothering to escape '.' in pluginDomain below
-                            var regex = new RegExp('>' + pluginDomain + '[^<]*<');
+                        if (arg.content.indexOf(ensembleUrl) !== -1 && arg.content.indexOf('ev-thumb') === -1) {
+                            var regex = new RegExp('>' + ensembleUrl.replace(/http(s)?:\/\//, '') + '[^<]*<');
                             arg.content = arg.content.replace(regex, '><img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/><');
                             // Once our content is updated we want to remove this handler
                             beforeSet.remove(callback);
@@ -82,7 +85,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleUrl');
                     filepicker.select_file({
                         // Lame hack so file is accepted by Moodle
                         title: title + '.avi',
-                        source: '//' + pluginDomain + '?' + $.param(settings),
+                        source: ensembleUrl + '?' + $.param(settings),
                         thumbnail: thumbnail
                     });
                     // There's no reason to display the intermediate form so immediately submit

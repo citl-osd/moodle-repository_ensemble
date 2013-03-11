@@ -69,7 +69,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleUrl');
                     // Don't bother storing search either
                     delete settings['search'];
                     var callback = function(ed, arg) {
-                        if (arg.content.indexOf(pluginDomain) !== -1 && arg.content.indexOf('ev-thumb')) {
+                        if (arg.content.indexOf(pluginDomain) !== -1 && arg.content.indexOf('ev-thumb') !== -1) {
                             // Not bothering to escape '.' in pluginDomain below
                             var regex = new RegExp('>' + pluginDomain + '[^<]*<');
                             arg.content = arg.content.replace(regex, '><img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/><');

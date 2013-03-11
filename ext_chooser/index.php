@@ -2,6 +2,8 @@
 
 require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '/config.php');
 
+$ensembleUrl = get_config('ensemble', 'ensembleUrl');
+
 ?>
 <!doctype html>
 <html>
@@ -27,57 +29,65 @@ require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '
     <script src="js/jquery.ba-bbq/jquery.ba-bbq.min.js?v=1.3pre"></script>
     <script src="js/lodash/lodash.min.js?v=0.9.2"></script>
     <script src="js/backbone/backbone-min.js?v=0.9.2"></script>
-    <script src="js/ev-script.min.js?v=20130228"></script>
+    <script src="js/ev-script.min.js?v=20130310"></script>
     <script type="text/javascript">
         (function($) {
 
             'use strict';
 
             var proxyPath = '<?= $CFG->wwwroot . "/repository/ensemble/ext_chooser/proxy.php" ?>',
-                ensembleUrl = 'https://cloud.ensemblevideo.com',
+                ensembleUrl = '<?= $ensembleUrl ?>',
                 type = $.deparam.querystring().type,
                 app = new EV.EnsembleApp({
-                ensembleUrl: ensembleUrl,
-                authId: 'ev-moodle',
-                authPath: '<?= $CFG->wwwroot ?>',
-                pageSize: 100,
-                scrollHeight: 300,
-                proxyPath: proxyPath,
-                urlCallback: function(url) {
-                    return proxyPath + '?request=' + encodeURIComponent(url);
-                }
-            });
-
-            var $form = $('form'),
+                    ensembleUrl: ensembleUrl,
+                    authId: 'ev-moodle',
+                    authPath: '<?= $CFG->wwwroot ?>',
+                    pageSize: 100,
+                    scrollHeight: 300,
+                    proxyPath: proxyPath,
+                    urlCallback: function(url) {
+                        return proxyPath + '?request=' + encodeURIComponent(url);
+                    },
+                }),
+                $form = $('form'),
                 $content = $('#content'),
-                $submit = $('.submit').hide();
+                $submit = $('.submit').hide(),
+                submitHandler = function(e) {
+                    var settings = JSON.parse($content.val()),
+                        content = _.extend({}, settings.content),
+                        // This is entirely arbitrary and doesn't actually point to anything.
+                        pluginDomain = 'plugin.moodle.ensemblevideo.com',
+                        title = '',
+                        thumbnail = '',
+                        beforeSet = window.parent.tinymce.activeEditor.selection.onBeforeSetContent,
+                        filepicker = window.parent.M.core_filepicker.active_filepicker;
 
-            var submitHandler = function(e) {
-                var settings = JSON.parse($content.val()),
-                    content = _.extend({}, settings.content),
-                    title = content.Title || content.Name || 'untitled',
-                    filepicker = window.parent.M.core_filepicker.active_filepicker;
-                // We don't need to persist content
-                delete settings['content'];
-                // Don't bother storing search either
-                delete settings['search'];
-                filepicker.select_file({
-                    // Lame hack so file is accepted by Moodle
-                    title: title, // + '.avi',
-                    source: '//plugin.moodle.ensemblevideo.com?' + $.param(settings),
-                    thumbnail: content.ThumbnailUrl || '<?= $CFG->wwwroot . "/repository/ensemble/ext_chooser/css/images/logo.png" ?>'
-                });
-                var $filepickerSelect = $("#filepicker-select-" + filepicker.options.client_id, window.parent.document);
-                var $titleField = $('.fp-saveas input', $filepickerSelect);
-                // Hide auther and license fields
-                $('.fp-setauthor', $filepickerSelect).hide();
-                $('.fp-setlicense', $filepickerSelect).hide();
-                // Hide the field and add an arbitrary video file extension so this passes mimetype check
-                $titleField.hide().val(title + '.avi');
-                // Show our original title
-                $titleField.before('<span>' + title + '</span>');
-                e.preventDefault;
-            };
+                    title = content.Title || content.Name;
+                    thumbnail = content.ThumbnailUrl || '<?= $CFG->wwwroot . "/repository/ensemble/ext_chooser/css/images/logo.png" ?>';
+                    // We don't need to persist content
+                    delete settings['content'];
+                    // Don't bother storing search either
+                    delete settings['search'];
+                    var callback = function(ed, arg) {
+                        if (arg.content.indexOf(pluginDomain) !== -1 && arg.content.indexOf('ev-thumb')) {
+                            // Not bothering to escape '.' in pluginDomain below
+                            var regex = new RegExp('>' + pluginDomain + '[^<]*<');
+                            arg.content = arg.content.replace(regex, '><img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/><');
+                            // Once our content is updated we want to remove this handler
+                            beforeSet.remove(callback);
+                        }
+                    };
+                    beforeSet.add(callback);
+                    filepicker.select_file({
+                        // Lame hack so file is accepted by Moodle
+                        title: title + '.avi',
+                        source: '//' + pluginDomain + '?' + $.param(settings),
+                        thumbnail: thumbnail
+                    });
+                    // There's no reason to display the intermediate form so immediately submit
+                    $('.fp-select-confirm', window.parent.document).click();
+                    e.preventDefault();
+                };
 
             $submit.click(submitHandler);
 
@@ -90,8 +100,6 @@ require_once(dirname(dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])))) . '
             });
 
             $(document).ready(function() {
-                // Hide the navbar as it's unused
-                $('.fp-navbar', window.parent.document).hide();
                 if (type === 'video') {
                     app.handleField($('#content').parent(), new EV.VideoSettings(), '#content');
                 } else if (type === 'playlist') {

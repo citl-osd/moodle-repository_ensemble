@@ -1,15 +1,9 @@
 <?php
 
 require_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/config.php');
-require_once(dirname(dirname(dirname(__FILE__))) . '/lib.php');
 
-$repo_id   = required_param('repo_id', PARAM_INT);  // Repository ID
-$contextid = required_param('ctx_id', PARAM_INT);   // Context ID
-
-$repo = repository::get_repository_by_id($repo_id, $contextid);
-
-$ensembleUrl = $repo->options['ensembleURL'];
-$evtype = $repo->options['evtype'];
+$evtype = required_param('type', PARAM_TEXT);
+$ensembleUrl = get_config('ensemble', 'ensembleURL');
 
 ?>
 <!doctype html>
@@ -53,7 +47,7 @@ $evtype = $repo->options['evtype'];
                     scrollHeight: 300,
                     proxyPath: proxyPath,
                     urlCallback: function(url) {
-                        return proxyPath + '?request=' + encodeURIComponent(url) + '&repo_id=<?= $repo_id ?>&ctx_id=<?= $contextid ?>';
+                        return proxyPath + '?request=' + encodeURIComponent(url);
                     },
                 }),
                 $form = $('form'),

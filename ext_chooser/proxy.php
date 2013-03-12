@@ -8,14 +8,11 @@ require_once($CFG->libdir . '/moodlelib.php');
 require_once('Zend/Http/Client.php');
 
 $api_url        = urldecode(required_param('request', PARAM_RAW));
-$repo_id        = required_param('repo_id', PARAM_INT);  // Repository ID
-$contextid      = required_param('ctx_id', PARAM_INT);   // Context ID
 
-$repo           = repository::get_repository_by_id($repo_id, $contextid);
-$ensembleUrl    = $repo->options['ensembleURL'];
-$serviceUser    = $repo->options['serviceUser'];
-$servicePass    = $repo->options['servicePass'];
-$authDomain     = $repo->options['authDomain'];
+$ensembleUrl    = get_config('ensemble', 'ensembleURL');
+$serviceUser    = get_config('ensemble', 'serviceUser');
+$servicePass    = get_config('ensemble', 'servicePass');
+$authDomain     = get_config('ensemble', 'authDomain');
 
 // Only service requests for our configured ensemble url
 if (preg_match('#^' . preg_quote($ensembleUrl) . '#i', $api_url) !== 1) {

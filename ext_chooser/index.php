@@ -58,32 +58,42 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
                         content = _.extend({}, settings.content),
                         title = '',
                         thumbnail = '',
-                        beforeSet = window.parent.tinymce.activeEditor.selection.onBeforeSetContent,
+                        editor = window.parent.tinymce.activeEditor,
+                        beforeSet = editor.selection.onBeforeSetContent,
                         filepicker = window.parent.M.core_filepicker.active_filepicker;
 
                     title = content.Title || content.Name;
                     thumbnail = content.ThumbnailUrl || wwwroot + '/repository/ensemble/ext_chooser/css/images/logo.png';
+
                     // We don't need to persist content
                     delete settings['content'];
                     // Don't bother storing search either
                     delete settings['search'];
-                    var callback = function(ed, arg) {
-                        if (arg.content.indexOf(ensembleUrl) !== -1 && arg.content.indexOf('ev-thumb') === -1) {
-                            var regex = new RegExp('>' + ensembleUrl.replace(/http(s)?:\/\//, '') + '[^<]*<');
-                            arg.content = arg.content.replace(regex, '><img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/><');
-                            // Once our content is updated we want to remove this handler
-                            beforeSet.remove(callback);
+
+                    // Content to insert into editor
+                    var html =
+                        '<a href="' + ensembleUrl + '?' + $.param(settings) + '">' +
+                        '  <img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/>' +
+                        '</a>';
+
+                    // Add our content directly into the editor...bypassing unnecessary/unused filepicker screens
+                    editor.execCommand('mceInsertContent', false, html);
+
+                    // Close the filepicker
+                    filepicker.mainui.hide();
+
+                    // Close tinymce popups
+                    _.each(editor.windowManager.windows, function(w) {
+                        var frameId = '', frame;
+                        if (w.iframeElement) {
+                            frameId = w.iframeElement.id;
                         }
-                    };
-                    beforeSet.add(callback);
-                    filepicker.select_file({
-                        // Lame hack so file is accepted by Moodle
-                        title: title + '.avi',
-                        source: ensembleUrl + '?' + $.param(settings),
-                        thumbnail: thumbnail
+                        frame = window.parent.document.getElementById(frameId);
+                        if (frame && frame.contentWindow) {
+                            editor.windowManager.close(frame.contentWindow);
+                        }
                     });
-                    // There's no reason to display the intermediate form so immediately submit
-                    $('.fp-select-confirm', window.parent.document).click();
+
                     e.preventDefault();
                 };
 

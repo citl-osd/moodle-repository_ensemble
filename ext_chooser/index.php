@@ -19,9 +19,9 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
   </head>
   <body>
     <form>
-      <fieldset>
+      <fieldset id="contentWrap">
         <input id="content" name="content" type="hidden" />
-        <input name="submit" class="submit" type="submit" value="Submit" />
+        <input name="submit" class="submit" type="submit" value="Save" style="display:none;" />
       </fieldset>
     </form>
     <script src="js/jquery/jquery.min.js?v=1.8.3"></script>
@@ -29,7 +29,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
     <script src="js/jquery.cookie/jquery.cookie.js?v=1.3.1"></script>
     <script src="js/lodash/lodash.min.js?v=0.9.2"></script>
     <script src="js/backbone/backbone-min.js?v=0.9.2"></script>
-    <script src="js/ev-script.min.js?v=20130310"></script>
+    <script src="js/ev-script/ev-script.js?v=20130313"></script>
     <script type="text/javascript">
         (function($) {
 
@@ -48,7 +48,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
                     proxyPath: proxyPath,
                     urlCallback: function(url) {
                         return proxyPath + '?request=' + encodeURIComponent(url);
-                    },
+                    }
                 }),
                 $form = $('form'),
                 $content = $('#content'),
@@ -98,11 +98,13 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
             });
 
             $(document).ready(function() {
+                var $wrap = $('#content').parent();
                 if (type === 'video') {
-                    app.handleField($('#content').parent(), new EV.VideoSettings(), '#content');
+                    app.handleField($wrap[0], new EV.VideoSettings(), '#content');
                 } else if (type === 'playlist') {
-                    app.handleField($('#content').parent(), new EV.PlaylistSettings(), '#content');
+                    app.handleField($wrap[0], new EV.PlaylistSettings(), '#content');
                 }
+                app.appEvents.trigger('showPicker', $wrap.attr('id'));
             });
 
         }(jQuery));

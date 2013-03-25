@@ -14,24 +14,47 @@ $serviceUser    = get_config('ensemble', 'serviceUser');
 $servicePass    = get_config('ensemble', 'servicePass');
 $authDomain     = get_config('ensemble', 'authDomain');
 
+$username       = '';
+$password       = '';
+$filter         = true;
+
+if (!empty($serviceUser)) {
+  $username = $serviceUser;
+  $password = $servicePass;
+  $filter = true;
+} else if (!empty($_COOKIE['ev-moodle-user'])) {
+  $username = $_COOKIE['ev-moodle-user'];
+  $password = $_COOKIE['ev-moodle-pass'];
+  // Ignore configured auth domain (it should only be used with a service account)
+  $authDomain = '';
+  $filter = false;
+}
+
 // Only service requests for our configured ensemble url
 if (preg_match('#^' . preg_quote($ensembleUrl) . '#i', $api_url) !== 1) {
-    header('Bad Request', true, 400);
-    print('URL mismatch');
-    exit;
+  header('Bad Request', true, 400);
+  print('URL mismatch');
+  exit;
 }
 
 $client = new Zend_Http_Client($api_url);
 // Construct basic auth header for configured service account
-$client->setHeaders('Authorization', 'Basic ' . base64_encode($serviceUser . (!empty($authDomain) ? '@' . $authDomain : '') . ':' . $servicePass));
+$client->setHeaders('Authorization', 'Basic ' . base64_encode($username . (!empty($authDomain) ? '@' . $authDomain : '') . ':' . $password));
 
-// Append user filter for currently logged in Moodle user
-$userFilter = $USER->username . (!empty($authDomain) ? '@' . $authDomain : '');
-$client->setParameterGet('User', $userFilter);
+// Append user filter for currently logged in Moodle user (if we're using a service account)
+if ($filter) {
+  $userFilter = $USER->username . (!empty($authDomain) ? '@' . $authDomain : '');
+  $client->setParameterGet('User', $userFilter);
+}
+
+// Send request
 $response = $client->request();
 
+// Forward along headers w/ the exception of basic auth as script uses cookies
 foreach ($response->getHeaders() as $header => $value) {
-  header($header . ': ' . $value);
+  if (strtolower($header) !== 'www-authenticate') {
+    header($header . ': ' . $value);
+  }
 }
 
 // Set response status.

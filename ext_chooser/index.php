@@ -72,7 +72,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
 
                     // Content to insert into editor
                     var html =
-                        '<a href="' + ensembleUrl + '?' + $.param(settings) + '">' +
+                        '<a class="mceNonEditable" href="' + ensembleUrl + '?' + $.param(settings) + '">' +
                         '  <img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/>' +
                         '</a>';
 

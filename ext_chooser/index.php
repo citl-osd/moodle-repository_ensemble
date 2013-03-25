@@ -63,7 +63,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
                         filepicker = window.parent.M.core_filepicker.active_filepicker;
 
                     title = content.Title || content.Name;
-                    thumbnail = content.ThumbnailUrl || wwwroot + '/repository/ensemble/ext_chooser/css/images/logo.png';
+                    thumbnail = content.ThumbnailUrl || wwwroot + '/repository/ensemble/ext_chooser/css/images/playlist.png';
 
                     // We don't need to persist content
                     delete settings['content'];

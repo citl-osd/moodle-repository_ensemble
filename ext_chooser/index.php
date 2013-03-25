@@ -37,8 +37,8 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
 
             var wwwroot = window.parent.M.cfg.wwwroot,
                 proxyPath = wwwroot + '/repository/ensemble/ext_chooser/proxy.php',
-                ensembleUrl = '<?= $ensembleUrl ?>',
-                type = '<?= $evtype ?>',
+                ensembleUrl = '<?php echo $ensembleUrl ?>',
+                type = '<?php echo $evtype ?>',
                 app = new EV.EnsembleApp({
                     ensembleUrl: ensembleUrl,
                     authId: 'ev-moodle',

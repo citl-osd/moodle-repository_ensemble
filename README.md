@@ -1,4 +1,65 @@
-moodle-repository_ensemble
-==========================
-
 Ensemble Video Moodle Repository Plugin
+=======================================
+
+## Installing from Git
+
+These installation instructions are based off the strategy endorsed by Moodle
+for [installing contibuted extensions via Git](http://docs.moodle.org/24/en/Git_for_Administrators#Installing_a_contributed_extension_from_its_Git_repository).
+
+    $ cd /path/to/your/moodle
+    $ cd repository
+    $ git clone https://github.com/jmpease/moodle-repository_ensemble.git ensemble
+    $ cd ensemble
+    $ git branch -b MOODLE_24_STABLE origin/MOODLE_24_STABLE
+
+
+## Installing from ZIP
+
+    $ wget https://github.com/jmpease/moodle-repository_ensemble/archive/MOODLE_24_STABLE.zip
+    $ unzip MOODLE_24_STABLE.zip
+    $ mv moodle-repository_ensemble-MOODLE_24_STABLE /path/to/your/moodle/repository/ensemble
+
+
+**Note:** Regardless of the installation method above, you also need to install the required [filterextension](https://github.com/jmpease/moodle-repository_ensemble).
+
+
+## Plugin Setup
+
+As a Moodle administrator, navigate to Settings -> Site Administration -> Notifications
+and click 'Upgrade Moodle database now' to install the plugin.
+
+Next navigate to Settings -> Site Administration -> Plugins -> Repositories -> Manage repositories
+and set the Ensemble Video repository to 'Enabled and visible'.
+
+### Configuration Settings
+
+#### Ensemble URL
+Required setting.  Must point to the application root of your Ensemble Video installation (e.g. https://cloud.ensemblevideo.com).
+
+#### Service Account Username (optional)
+
+Optional.  If left empty, users of the repository will be prompted to
+authenticate with their Ensemble Video credentials. Otherwise, this can be set
+to a "service account" (a regular Ensemble Video account) that has access to all
+content for your Moodle user population within Ensemble Video.  The plugin will
+use this account to query the Ensemble Video API, but will filter results by the
+username of the currently logged in Moodle user.  With this approach users won't
+have to authenticate to Ensemble Video, but it does imply that Moodle and
+Ensemble Video usernames match.
+
+#### Service Account Password (optional)
+
+Optional.  Used along with the Service Account Username as the credentials used
+to query the Ensemble Video API.  See above.
+
+#### Ensemble Account Domain (optional)
+
+Optional.  Used to specify an Ensemble Video authentication domain to be used
+when filtering results by Moodle username.  This is only used when the Service
+Account Username is set and is appended to the currently authenticated Moodle
+username.
+
+
+Once setup, you should see two additional repositories under 'Insert Moodle media' in the
+content editor, one for choosing videos and another for choosing playlists from the
+configured Ensemble Video installation.

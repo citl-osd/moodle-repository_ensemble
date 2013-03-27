@@ -1,5 +1,13 @@
 ## ![Ensemble Video logo](ext_chooser/css/images/logo.png) Ensemble Video Moodle Repository Plugin
 
+### Overview
+
+Along with the [Ensemble Video Moodle Filter Plugin](https://github.com/jmpease/moodle-filter_ensemble), this plugin
+makes it easier for Moodle users to add videos and playlists to content without
+having to navigate to Ensemble Video and copy/paste complicated embed codes.  This
+plugin provides additional video and playlist repositories in the content editor that enable
+Moodle users to search and choose Ensemble Video media to be added.
+
 ### Installing from Git
 
 These installation instructions are based off the strategy endorsed by Moodle

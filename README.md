@@ -19,7 +19,7 @@ for [installing contibuted extensions via Git](http://docs.moodle.org/24/en/Git_
     $ mv moodle-repository_ensemble-MOODLE_24_STABLE /path/to/your/moodle/repository/ensemble
 
 
-**Note:** Regardless of the installation method above, you also need to install the required [filter extension](https://github.com/jmpease/moodle-repository_ensemble).
+**Note:** Regardless of the installation method above, you also need to install the required [filter extension](https://github.com/jmpease/moodle-filter_ensemble).
 
 
 ### Plugin Setup

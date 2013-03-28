@@ -17,7 +17,7 @@ for [installing contibuted extensions via Git](http://docs.moodle.org/24/en/Git_
     $ cd repository
     $ git clone https://github.com/jmpease/moodle-repository_ensemble.git ensemble
     $ cd ensemble
-    $ git branch -b MOODLE_24_STABLE origin/MOODLE_24_STABLE
+    $ git checkout -b MOODLE_24_STABLE origin/MOODLE_24_STABLE
 
 
 ### Installing from ZIP

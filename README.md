@@ -47,12 +47,12 @@ Required setting.  Must point to the application root of your Ensemble Video ins
 
 Optional.  If left empty, users of the repository will be prompted to
 authenticate with their Ensemble Video credentials. Otherwise, this can be set
-to a "service account" (a regular Ensemble Video account) that has access to all
-content for your Moodle user population within Ensemble Video.  The plugin will
-use this account to query the Ensemble Video API, but will filter results by the
-username of the currently logged in Moodle user.  With this approach users won't
-have to authenticate to Ensemble Video, but it does imply that Moodle and
-Ensemble Video usernames match.
+to a "service account" (an Ensemble Video account with a "System Administrator"
+role) that has access to all content for your Moodle user population within
+Ensemble Video.  The plugin will use this account to query the Ensemble Video
+API, but will filter results by the username of the currently logged in Moodle
+user.  With this approach users won't have to authenticate to Ensemble Video,
+but it does imply that Moodle and Ensemble Video usernames match.
 
 ##### Service Account Password (optional)
 

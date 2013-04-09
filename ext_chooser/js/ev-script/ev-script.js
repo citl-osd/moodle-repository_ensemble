@@ -1,5 +1,5 @@
 /**
- * ev-script 0.1.0 2013-03-13
+ * ev-script 0.2.0 2013-04-09
  * Ensemble Video Integration Library
  * https://github.com/jmpease/ev-script
  * Copyright (c) 2013 Symphony Video, Inc.
@@ -930,6 +930,8 @@ define('ev-script/views/auth',['require','exports','module','jquery','underscore
             this.config = cacheUtil.getAppConfig(this.appId);
             this.appEvents = eventsUtil.getEvents(this.appId);
             this.submitCallback = options.submitCallback || function() {};
+        },
+        render: function() {
             var html = this.template();
             this.$dialog = $('<div class="ev-auth"></div>');
             this.$el.after(this.$dialog);
@@ -1001,12 +1003,13 @@ define('ev-script/views/base',['require','jquery','underscore','backbone','ev-sc
                     submitCallback: authCallback,
                     appId: this.appId
                 });
+                authView.render();
             } else if (xhr.status === 500) {
                 // Making an assumption that root is window here...
                 root.alert('It appears there is an issue with the Ensemble Video installation.');
             } else if (xhr.status === 404) {
                 root.alert('Could not find requested resource.  This is likely a problem with the configured Ensemble Video base url.');
-            } else {
+            } else if (xhr.status !== 0) {
                 root.alert('An unexpected error occurred.  Check the server log for more details.');
             }
         },
@@ -1065,8 +1068,8 @@ define('ev-script/views/hider',['require','underscore','ev-script/views/base','t
             BaseView.prototype.initialize.call(this, options);
             _.bindAll(this, 'hideHandler', 'logoutHandler', 'authHandler', 'render');
             this.picker = options.picker;
-            this.globalEvents.bind('authSet', this.authHandler);
-            this.globalEvents.bind('authRemoved', this.authHandler);
+            this.globalEvents.on('authSet', this.authHandler);
+            this.globalEvents.on('authRemoved', this.authHandler);
         },
         events: {
             'click a.action-hide': 'hideHandler',
@@ -1112,7 +1115,7 @@ define('ev-script/views/picker',['require','jquery','underscore','ev-script/view
             _.bindAll(this, 'chooseItem', 'hidePicker', 'showPicker', 'hideHandler');
             this.$el.hide();
             this.field = options.field;
-            this.appEvents.bind('hidePickers', this.hideHandler);
+            this.appEvents.on('hidePickers', this.hideHandler);
             this.hider = new HiderView({
                 id: this.id + '-hider',
                 tagName: 'div',
@@ -1182,11 +1185,11 @@ define('ev-script/views/search',['require','underscore','ev-script/views/base','
                 sourceId: this.picker.model.get('sourceId')
             }));
             var $loader = this.$('div.loader');
-            $loader.bind('ajaxSend', _.bind(function(e, xhr, settings) {
+            $loader.on('ajaxSend', _.bind(function(e, xhr, settings) {
                 if (this.picker === settings.picker) {
                     $loader.addClass('loading');
                 }
-            }, this)).bind('ajaxComplete', _.bind(function(e, xhr, settings) {
+            }, this)).on('ajaxComplete', _.bind(function(e, xhr, settings) {
                 if (this.picker === settings.picker) {
                     $loader.removeClass('loading');
                 }
@@ -1394,7 +1397,7 @@ define('ev-script/views/results',['require','jquery','underscore','ev-script/vie
                     this.$scrollLoader.evScrollLoader('hideLoader');
                 }
             }
-            this.collection.bind('add', this.addHandler);
+            this.collection.on('add', this.addHandler);
         }
     });
 
@@ -1811,7 +1814,7 @@ define('ev-script/views/video-settings',['require','jquery','underscore','ev-scr
         initialize: function(options) {
             SettingsView.prototype.initialize.call(this, options);
             this.encoding = options.encoding;
-            this.encoding.bind('change:id', _.bind(function() {
+            this.encoding.on('change:id', _.bind(function() {
                 this.render();
             }, this));
         },
@@ -1898,7 +1901,7 @@ define('ev-script/views/organization-select',['require','underscore','ev-script/
             _.bindAll(this, 'render');
             this.picker = options.picker;
             this.$el.html('<option value="-1">Loading...</option>');
-            this.collection.bind('reset', this.render);
+            this.collection.on('reset', this.render);
         },
         render: function() {
             this.$el.html(this.template({
@@ -1947,7 +1950,7 @@ define('ev-script/views/library-select',['require','underscore','ev-script/views
             _.bindAll(this, 'render');
             this.picker = options.picker;
             this.$el.html('<option value="-1">Loading...</option>');
-            this.collection.bind('reset', this.render);
+            this.collection.on('reset', this.render);
         },
         render: function() {
             this.$el.html(this.template({
@@ -2029,11 +2032,11 @@ define('ev-script/views/playlist-select',['require','jquery','underscore','ev-sc
                 })
             });
             var $loader = this.$('div.loader');
-            $loader.bind('ajaxSend', _.bind(function(e, xhr, settings) {
+            $loader.on('ajaxSend', _.bind(function(e, xhr, settings) {
                 if (this.picker === settings.picker) {
                     $loader.addClass('loading');
                 }
-            }, this)).bind('ajaxComplete', _.bind(function(e, xhr, settings) {
+            }, this)).on('ajaxComplete', _.bind(function(e, xhr, settings) {
                 if (this.picker === settings.picker) {
                     $loader.removeClass('loading');
                 }
@@ -2361,7 +2364,7 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
                         dataType: 'jsonp'
                     });
                 }
-                this.model.bind('change:id', _.bind(function() {
+                this.model.on('change:id', _.bind(function() {
                     // Only fetch encoding if identifier is set
                     if (this.model.id) {
                         this.encoding.set({
@@ -2396,7 +2399,7 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
             this.settings = new this.settingsClass(settingsOptions);
             this.$field.after(this.picker.$el);
             this.renderActions();
-            this.model.bind('change', _.bind(function() {
+            this.model.on('change', _.bind(function() {
                 if (!this.model.isNew()) {
                     var json = this.model.toJSON();
                     this.$field.val(JSON.stringify(json));
@@ -2404,7 +2407,7 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
                     this.renderActions();
                 }
             }, this));
-            this.appEvents.bind('showPicker', function(id) {
+            this.appEvents.on('showPicker', function(id) {
                 if (this.id === id) {
                     this.$('.action-choose').trigger('click');
                 }

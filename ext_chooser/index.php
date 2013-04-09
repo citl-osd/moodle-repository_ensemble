@@ -14,7 +14,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ensemble Video External File Chooser</title>
     <link rel="stylesheet" href="css/jquery-ui/jquery-ui.min.css?v=1.8.3">
-    <link rel="stylesheet" href="css/ev-script.css?v=20130304.1">
+    <link rel="stylesheet" href="css/ev-script.css?v=20130409">
     <link rel="stylesheet" href="css/style.css?v=1">
   </head>
   <body>
@@ -29,7 +29,7 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
     <script src="js/jquery.cookie/jquery.cookie.js?v=1.3.1"></script>
     <script src="js/lodash/lodash.min.js?v=0.9.2"></script>
     <script src="js/backbone/backbone-min.js?v=0.9.2"></script>
-    <script src="js/ev-script/ev-script.js?v=20130313"></script>
+    <script src="js/ev-script/ev-script.js?v=20130409"></script>
     <script type="text/javascript">
         (function($) {
 

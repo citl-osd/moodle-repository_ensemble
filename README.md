@@ -41,7 +41,12 @@ and set the Ensemble Video repository to 'Enabled and visible'.
 #### Configuration Settings
 
 ##### Ensemble URL
-Required setting.  Must point to the application root of your Ensemble Video installation (e.g. https://cloud.ensemblevideo.com).
+Required setting.  Must point to the application root of your Ensemble Video
+installation.  If, for example, the url for your Ensemble install is
+'https://cloud.ensemblevideo.com/app/library.aspx', you would use
+'https://cloud.ensemblevideo.com'.  In the case of a url like
+'https://server.myschool.edu/ensemble/app/library.aspx' you would use
+'https://server.myschool.edu/ensemble'.
 
 ##### Service Account Username (optional)
 

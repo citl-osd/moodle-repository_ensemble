@@ -10,6 +10,9 @@ Moodle users to search and choose Ensemble Video media to be added.
 
 **Note:** This plugin requires an Ensemble Video version of 3.4 or higher.
 
+In addition to this documentation, also see our [Setup the Moodle Plugin](http://support.ensemblevideo.com/setup-the-moodle-plugin/)
+and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-plugin/) support articles.
+
 ### Installing from Git
 
 These installation instructions are based off the strategy endorsed by Moodle

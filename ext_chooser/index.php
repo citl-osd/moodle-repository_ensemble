@@ -32,7 +32,7 @@ $path = ($path === '/' ? '' : $path);
     <script src="js/jquery.cookie/jquery.cookie.js?v=1.3.1"></script>
     <script src="js/lodash/lodash.underscore.min.js?v=1.1.1"></script>
     <script src="js/backbone/backbone-min.js?v=1.0.0"></script>
-    <script src="js/ev-script/ev-script.js?v=20130417"></script>
+    <script src="js/ev-script/ev-script.min.js?v=20130418"></script>
     <script type="text/javascript">
         (function($) {
 

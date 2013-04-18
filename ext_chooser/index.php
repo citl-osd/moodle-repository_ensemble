@@ -4,6 +4,9 @@ require_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/config.php');
 
 $evtype = required_param('type', PARAM_TEXT);
 $ensembleUrl = get_config('ensemble', 'ensembleURL');
+$wwwroot = $CFG->wwwroot;
+$path = parse_url($wwwroot, PHP_URL_PATH);
+$path = ($path === '/' ? '' : $path);
 
 ?>
 <!doctype html>
@@ -35,14 +38,14 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
 
             'use strict';
 
-            var wwwroot = window.parent.M.cfg.wwwroot,
+            var wwwroot = '<?php echo $wwwroot ?>',
                 proxyPath = wwwroot + '/repository/ensemble/ext_chooser/proxy.php',
                 ensembleUrl = '<?php echo $ensembleUrl ?>',
                 type = '<?php echo $evtype ?>',
                 app = new EV.EnsembleApp({
                     ensembleUrl: ensembleUrl,
                     authId: 'ev-moodle',
-                    authPath: wwwroot,
+                    authPath: '<?php echo $path . "/repository/ensemble/" ?>',
                     pageSize: 100,
                     scrollHeight: 300,
                     proxyPath: proxyPath,

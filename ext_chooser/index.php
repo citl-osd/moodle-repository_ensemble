@@ -27,9 +27,9 @@ $ensembleUrl = get_config('ensemble', 'ensembleURL');
     <script src="js/jquery/jquery.min.js?v=1.8.3"></script>
     <script src="js/jquery-ui/jquery-ui.min.js?v=1.8.23"></script>
     <script src="js/jquery.cookie/jquery.cookie.js?v=1.3.1"></script>
-    <script src="js/lodash/lodash.min.js?v=0.9.2"></script>
-    <script src="js/backbone/backbone-min.js?v=0.9.2"></script>
-    <script src="js/ev-script/ev-script.js?v=20130409"></script>
+    <script src="js/lodash/lodash.underscore.min.js?v=1.1.1"></script>
+    <script src="js/backbone/backbone-min.js?v=1.0.0"></script>
+    <script src="js/ev-script/ev-script.js?v=20130417"></script>
     <script type="text/javascript">
         (function($) {
 

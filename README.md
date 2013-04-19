@@ -1,19 +1,34 @@
 ## ![Ensemble Video logo](ext_chooser/css/images/logo.png) Ensemble Video Moodle Repository Plugin
 
-### Overview
+__[Overview](#overview)__<br/>
+__[Requirements](#req)__<br/>
+__[Installing from Git](#git_install)__<br/>
+__[Upgrading from Git](#git_upgrade)__<br/>
+__[Installing from ZIP](#zip_install)__<br/>
+__[Upgrading from ZIP](#zip_upgrade)__<br/>
+__[Plugin Setup](#setup)__<br/>
+__[Plugin Configuration](#config)__<br/>
 
-Along with the [Ensemble Video Moodle Filter Plugin](https://github.com/jmpease/moodle-filter_ensemble), this plugin
-makes it easier for Moodle users to add videos and playlists to content without
-having to navigate to Ensemble Video and copy/paste complicated embed codes.  This
-plugin provides additional video and playlist repositories in the content editor that enable
-Moodle users to search and choose Ensemble Video media to be added.
+### <a id="overview"></a>Overview
 
-**Note:** This plugin requires an Ensemble Video version of 3.4 or higher.
+Along with the [Ensemble Video Moodle Filter Plugin](https://github.com/jmpease/moodle-filter_ensemble),
+this plugin makes it easier for Moodle users to add videos and playlists to
+content without having to navigate to Ensemble Video and copy/paste complicated
+embed codes.  Once setup, you should see two additional repositories under
+_Insert Moodle media_ in the Moodle content editor, one for choosing videos and
+another for choosing playlists from the configured Ensemble Video installation.
 
 In addition to this documentation, also see our [Setup the Moodle Plugin](http://support.ensemblevideo.com/setup-the-moodle-plugin/)
 and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-plugin/) support articles.
 
-### Installing from Git
+### <a id="req"></a>Requirements
+
+* Ensemble Video version of 3.4 or higher.
+* Moodle version 2.3 or higher.
+* Internet Explorer 9 or higher.  No known issues with other browsers.
+* Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/jmpease/moodle-filter_ensemble) for embed code rendering.
+
+### <a id="git_install"></a>Installing from Git
 
 These installation instructions are based off the strategy endorsed by Moodle
 for [installing contributed extensions via Git](http://docs.moodle.org/24/en/Git_for_Administrators#Installing_a_contributed_extension_from_its_Git_repository).
@@ -24,34 +39,51 @@ for [installing contributed extensions via Git](http://docs.moodle.org/24/en/Git
     $ cd ensemble
     $ git checkout -b MOODLE_24_STABLE origin/MOODLE_24_STABLE
 
+As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
+and click _Upgrade Moodle database now_ to install the plugin.
 
-### Installing from ZIP
+### <a id="git_upgrade"></a>Upgrading from Git
+
+To upgrade the plugin do the following:
+
+    $ cd /path/to/your/moodle/repository/ensemble
+    $ git pull
+
+As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
+and click _Upgrade Moodle database now_ to upgrade the plugin.
+
+### <a id="zip_install"></a>Installing from ZIP
 
     $ wget https://github.com/jmpease/moodle-repository_ensemble/archive/MOODLE_24_STABLE.zip
     $ unzip MOODLE_24_STABLE.zip
     $ mv moodle-repository_ensemble-MOODLE_24_STABLE /path/to/your/moodle/repository/ensemble
 
+As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
+and click _Upgrade Moodle database now_ to install the plugin.
 
-**Note:** Regardless of the installation method above, you also need to install the required [filter extension](https://github.com/jmpease/moodle-filter_ensemble).
+### <a id="zip_upgrade"></a>Upgrading from ZIP
 
+To upgrade the plugin delete the
+_/path/to/your/moodle/repository/ensemble_ directory, then repeat the installation
+steps above.
 
-### Plugin Setup
+As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
+and click _Upgrade Moodle database now_ to upgrade the plugin.
 
-As a Moodle administrator, navigate to Settings -> Site Administration -> Notifications
-and click 'Upgrade Moodle database now' to install the plugin.
+### <a id="setup"></a>Plugin Setup
 
-Next navigate to Settings -> Site Administration -> Plugins -> Repositories -> Manage repositories
-and set the Ensemble Video repository to 'Enabled and visible'.
+Navigate to _Settings -> Site Administration -> Plugins -> Repositories -> Manage repositories_
+and set the Ensemble Video repository to _Enabled and visible_.
 
-#### Configuration Settings
+#### <a id="config"></a>Configuration Settings
 
 ##### Ensemble URL
 Required setting.  Must point to the application root of your Ensemble Video
 installation.  If, for example, the url for your Ensemble install is
-'https://cloud.ensemblevideo.com/app/library.aspx', you would use
-'https://cloud.ensemblevideo.com'.  In the case of a url like
-'https://server.myschool.edu/ensemble/app/library.aspx' you would use
-'https://server.myschool.edu/ensemble'.
+_https://cloud.ensemblevideo.com/app/library.aspx_, you would use
+_https://cloud.ensemblevideo.com_.  In the case of a url like
+_https://server.myschool.edu/ensemble/app/library.aspx_ you would use
+_https://server.myschool.edu/ensemble_.
 
 ##### Service Account Username (optional)
 
@@ -75,8 +107,3 @@ Optional.  Used to specify an Ensemble Video authentication domain to be used
 when filtering results by Moodle username.  This is only used when the Service
 Account Username is set and is appended to the currently authenticated Moodle
 username.
-
-
-Once setup, you should see two additional repositories under 'Insert Moodle media' in the
-content editor, one for choosing videos and another for choosing playlists from the
-configured Ensemble Video installation.

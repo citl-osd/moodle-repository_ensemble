@@ -7,7 +7,6 @@ __[Upgrading from Git](#git_upgrade)__<br/>
 __[Installing from ZIP](#zip_install)__<br/>
 __[Upgrading from ZIP](#zip_upgrade)__<br/>
 __[Plugin Setup](#setup)__<br/>
-__[Plugin Configuration](#config)__<br/>
 
 ### <a id="overview"></a>Overview
 
@@ -75,7 +74,7 @@ and click _Upgrade Moodle database now_ to upgrade the plugin.
 Navigate to _Settings -> Site Administration -> Plugins -> Repositories -> Manage repositories_
 and set the Ensemble Video repository to _Enabled and visible_.
 
-#### <a id="config"></a>Configuration Settings
+#### Configuration Settings
 
 ##### Ensemble URL
 Required setting.  Must point to the application root of your Ensemble Video

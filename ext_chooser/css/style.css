@@ -27,6 +27,11 @@ div.ev-field {
     padding: 1em 1em;
 }
 
+div.ev-video-picker,
+div.ev-playlist-picker {
+    margin-bottom: 10px;
+}
+
 div.ev-results {
     padding-top: 0;
 }

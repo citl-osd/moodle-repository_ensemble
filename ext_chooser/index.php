@@ -18,7 +18,7 @@ $path = ($path === '/' ? '' : $path);
     <title>Ensemble Video External File Chooser</title>
     <link rel="stylesheet" href="css/jquery-ui/jquery-ui.min.css?v=1.8.3">
     <link rel="stylesheet" href="css/ev-script.css?v=20130409">
-    <link rel="stylesheet" href="css/style.css?v=1">
+    <link rel="stylesheet" href="css/style.css?v=2">
   </head>
   <body>
     <form>

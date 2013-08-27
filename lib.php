@@ -58,13 +58,16 @@ class repository_ensemble extends repository {
 
     $required = get_string('required');
     $mform->addElement('text', 'ensembleURL', get_string('ensembleURL', 'repository_ensemble'), array('value' => $ensembleURL, 'size' => '40'));
+    $mform->setType('ensembleURL', PARAM_URL);
     $mform->addRule('ensembleURL', $required, 'required', null, 'client');
     $mform->addElement('static', null, '', get_string('ensembleURLHelp', 'repository_ensemble'));
     $mform->addElement('text', 'serviceUser', get_string('serviceUser', 'repository_ensemble'), array('value' => $serviceUser, 'size' => '40'));
+    $mform->setType('serviceUser', PARAM_TEXT);
     $mform->addElement('static', null, '', get_string('serviceUserHelp', 'repository_ensemble'));
     $mform->addElement('passwordunmask', 'servicePass', get_string('servicePass', 'repository_ensemble'), array('value' => $servicePass, 'size' => '40'));
     $mform->addElement('static', null, '', get_string('servicePassHelp', 'repository_ensemble'));
     $mform->addElement('text', 'authDomain', get_string('authDomain', 'repository_ensemble'), array('value' => $authDomain, 'size' => '40'));
+    $mform->setType('authDomain', PARAM_HOST);
     $mform->addElement('static', null, '', get_string('authDomainHelp', 'repository_ensemble'));
   }
 

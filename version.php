@@ -14,6 +14,8 @@ defined('MOODLE_INTERNAL') || die();
 // You are on the MOODLE_25_STABLE branch.  Do NOT update the version
 // branching date rather update the release increment.
 $plugin->version        = 2013082800;
+$plugin->release        = '2.5 (Build: 2013082800)';
+$plugin->maturity       = MATURITY_STABLE;
 $plugin->requires       = 2013051400;
 $plugin->component      = 'repository_ensemble';
 $plugin->dependencies   = array('filter_ensemble' => 2013082800);

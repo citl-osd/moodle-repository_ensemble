@@ -1,5 +1,5 @@
 /**
- * ev-script 0.2.1 2013-04-18
+ * ev-script 0.3.0 2013-10-09
  * Ensemble Video Integration Library
  * https://github.com/jmpease/ev-script
  * Copyright (c) 2013 Symphony Video, Inc.
@@ -9,7 +9,7 @@
     if (typeof define === 'function' && define.amd) {
         // AMD.  Put jQuery plugins at the end since they don't return any values
         // that are passed to our factory.
-        define(['jquery', 'underscore', 'backbone', 'jquery-ui', 'jquery.cookie'], factory);
+        define(['jquery', 'underscore', 'backbone', 'jquery-ui', 'jquery.plupload.queue', 'jquery.cookie', 'plupload'], factory);
     } else {
         // Browser globals
         root.EV = factory(root.$, root._, root.Backbone);
@@ -447,7 +447,8 @@ define('ev-script/models/playlist-settings',['backbone'], function(Backbone) {
 
     return Backbone.Model.extend({
         defaults: {
-            type: 'playlist'
+            type: 'playlist',
+            search: '',
         }
     });
 });
@@ -479,38 +480,6 @@ define('ev-script/util/events',['require','underscore','backbone'],function(requ
 
 });
 
-define('ev-script/util/auth',['require','jquery','underscore','ev-script/util/events'],function(require) {
-
-    
-
-    var $ = require('jquery'),
-        _ = require('underscore'),
-        globalEvents = require('ev-script/util/events').getEvents('global');
-
-    return {
-        getUser: function(authId) {
-            return $.cookie(authId + '-user');
-        },
-        setAuth: function(authId, authDomain, authPath, username, password) {
-            username += (authDomain ? '@' + authDomain : '');
-            var cookieOptions = { path: authPath };
-            $.cookie(authId + '-user', username, _.extend({}, cookieOptions));
-            $.cookie(authId + '-pass', password, _.extend({}, cookieOptions));
-            globalEvents.trigger('authSet', authId);
-        },
-        removeAuth: function(authId, authPath) {
-            var cookieOptions = { path: authPath };
-            $.cookie(authId + '-user', null, _.extend({}, cookieOptions));
-            $.cookie(authId + '-pass', null, _.extend({}, cookieOptions));
-            globalEvents.trigger('authRemoved', authId);
-        },
-        hasAuth: function(authId) {
-            return $.cookie(authId + '-user') && $.cookie(authId + '-pass');
-        }
-    };
-
-});
-
 define('ev-script/util/cache',['require','jquery','underscore','backbone'],function(require) {
 
     
@@ -522,33 +491,49 @@ define('ev-script/util/cache',['require','jquery','underscore','backbone'],funct
     var Cache = function() {
         this.cache = [];
         this.get = function(index) {
-            return this.cache[index];
+            return index ? this.cache[index] : null;
         };
         this.set = function(index, value) {
-            return this.cache[index] = value;
+            return index ? this.cache[index] = value : null;
         };
         return this;
     };
 
     var caches = new Cache();
 
+    var _getAppCache = function(appId) {
+        var appCache = caches.get(appId);
+        if (!appCache) {
+            appCache = caches.set(appId, new Cache());
+        }
+        return appCache;
+    };
+
     // Convenience method to initialize a cache for app-specific configuration
     var setAppConfig = function(appId, config) {
-        return caches.set(appId, new Cache()).set('config', config);
+        return _getAppCache(appId).set('config', config);
     };
 
     var getAppConfig = function(appId) {
-        return caches.get(appId).get('config');
+        return _getAppCache(appId).get('config');
     };
 
-    var initUserCache = function() {
-        var userCache = new Cache();
-        userCache.set('videos', new Cache());
-        userCache.set('playlists', new Cache());
-        // There is only one value store for a users orgs
-        userCache.set('orgs', null);
-        userCache.set('libs', new Cache());
-        return userCache;
+    // Convenience method to initialize a cache for app-specific authentication
+    var setAppAuth = function(appId, auth) {
+        return _getAppCache(appId).set('auth', auth);
+    };
+
+    var getAppAuth = function(appId) {
+        return _getAppCache(appId).get('auth');
+    };
+
+    // Convenience method to initialize a cache for upstream application info
+    var setAppInfo = function(appId, info) {
+        return _getAppCache(appId).set('info', info);
+    };
+
+    var getAppInfo = function(appId) {
+        return _getAppCache(appId).get('info');
     };
 
     var getUserCache = function(ensembleUrl, user) {
@@ -558,7 +543,7 @@ define('ev-script/util/cache',['require','jquery','underscore','backbone'],funct
         }
         var userCache = appCache.get(user);
         if (!userCache) {
-            userCache = appCache.set(user, initUserCache());
+            userCache = appCache.set(user, new Cache());
         }
         return userCache;
     };
@@ -568,25 +553,65 @@ define('ev-script/util/cache',['require','jquery','underscore','backbone'],funct
         caches: caches,
         setAppConfig: setAppConfig,
         getAppConfig: getAppConfig,
+        setAppAuth: setAppAuth,
+        getAppAuth: getAppAuth,
+        setAppInfo: setAppInfo,
+        getAppInfo: getAppInfo,
         getUserCache: getUserCache
     };
 
 });
 
+define('ev-script/views/base',['require','jquery','underscore','backbone','ev-script/util/events','ev-script/util/cache'],function(require) {
+
+    
+
+    var $ = require('jquery'),
+        _ = require('underscore'),
+        Backbone = require('backbone'),
+        root = this,
+        eventsUtil = require('ev-script/util/events'),
+        cacheUtil = require('ev-script/util/cache');
+
+    return Backbone.View.extend({
+        initialize: function(options) {
+            this.appId = options.appId;
+            this.config = cacheUtil.getAppConfig(this.appId);
+            this.auth = cacheUtil.getAppAuth(this.appId);
+            this.info = cacheUtil.getAppInfo(this.appId);
+            this.appEvents = eventsUtil.getEvents(this.appId);
+            this.globalEvents = eventsUtil.getEvents('global');
+        },
+        ajaxError: function(xhr, authCallback) {
+            if (xhr.status === 401) {
+                this.auth.handleUnauthorized(this.el, authCallback);
+            } else if (xhr.status === 500) {
+                // Making an assumption that root is window here...
+                root.alert('It appears there is an issue with the Ensemble Video installation.');
+            } else if (xhr.status === 404) {
+                root.alert('Could not find requested resource.  This is likely a problem with the configured Ensemble Video base url.');
+            } else if (xhr.status !== 0) {
+                root.alert('An unexpected error occurred.  Check the server log for more details.');
+            }
+        }
+    });
+
+});
+
 /**
- * @license RequireJS text 2.0.5 Copyright (c) 2010-2012, The Dojo Foundation All Rights Reserved.
+ * @license RequireJS text 2.0.10 Copyright (c) 2010-2012, The Dojo Foundation All Rights Reserved.
  * Available via the MIT or new BSD license.
  * see: http://github.com/requirejs/text for details
  */
 /*jslint regexp: true */
-/*global require: false, XMLHttpRequest: false, ActiveXObject: false,
-  define: false, window: false, process: false, Packages: false,
-  java: false, location: false */
+/*global require, XMLHttpRequest, ActiveXObject,
+  define, window, process, Packages,
+  java, location, Components, FileUtils */
 
 define('text',['module'], function (module) {
     
 
-    var text, fs,
+    var text, fs, Cc, Ci, xpcIsWindows,
         progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
         xmlRegExp = /^\s*<\?xml(\s)+version=[\'\"](\d)*.(\d)*[\'\"](\s)*\?>/im,
         bodyRegExp = /<body[^>]*>\s*([\s\S]+)\s*<\/body>/im,
@@ -594,11 +619,11 @@ define('text',['module'], function (module) {
         defaultProtocol = hasLocation && location.protocol && location.protocol.replace(/\:/, ''),
         defaultHostName = hasLocation && location.hostname,
         defaultPort = hasLocation && (location.port || undefined),
-        buildMap = [],
+        buildMap = {},
         masterConfig = (module.config && module.config()) || {};
 
     text = {
-        version: '2.0.5',
+        version: '2.0.10',
 
         strip: function (content) {
             //Strips <?xml ...?> declarations so that external SVG and XML
@@ -751,6 +776,12 @@ define('text',['module'], function (module) {
                 useXhr = (masterConfig.useXhr) ||
                          text.useXhr;
 
+            // Do not load if it is an empty: url
+            if (url.indexOf('empty:') === 0) {
+                onLoad();
+                return;
+            }
+
             //Load the text. Use XHR if possible and in a browser.
             if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
                 text.get(url, function (content) {
@@ -812,17 +843,22 @@ define('text',['module'], function (module) {
     if (masterConfig.env === 'node' || (!masterConfig.env &&
             typeof process !== "undefined" &&
             process.versions &&
-            !!process.versions.node)) {
+            !!process.versions.node &&
+            !process.versions['node-webkit'])) {
         //Using special require.nodeRequire, something added by r.js.
         fs = require.nodeRequire('fs');
 
-        text.get = function (url, callback) {
-            var file = fs.readFileSync(url, 'utf8');
-            //Remove BOM (Byte Mark Order) from utf8 files if it is there.
-            if (file.indexOf('\uFEFF') === 0) {
-                file = file.substring(1);
+        text.get = function (url, callback, errback) {
+            try {
+                var file = fs.readFileSync(url, 'utf8');
+                //Remove BOM (Byte Mark Order) from utf8 files if it is there.
+                if (file.indexOf('\uFEFF') === 0) {
+                    file = file.substring(1);
+                }
+                callback(file);
+            } catch (e) {
+                errback(e);
             }
-            callback(file);
         };
     } else if (masterConfig.env === 'xhr' || (!masterConfig.env &&
             text.createXhr())) {
@@ -858,6 +894,10 @@ define('text',['module'], function (module) {
                     } else {
                         callback(xhr.responseText);
                     }
+
+                    if (masterConfig.onXhrComplete) {
+                        masterConfig.onXhrComplete(xhr, url);
+                    }
                 }
             };
             xhr.send(null);
@@ -888,7 +928,9 @@ define('text',['module'], function (module) {
                     line = line.substring(1);
                 }
 
-                stringBuffer.append(line);
+                if (line !== null) {
+                    stringBuffer.append(line);
+                }
 
                 while ((line = input.readLine()) !== null) {
                     stringBuffer.append(lineSeparator);
@@ -901,159 +943,49 @@ define('text',['module'], function (module) {
             }
             callback(content);
         };
-    }
+    } else if (masterConfig.env === 'xpconnect' || (!masterConfig.env &&
+            typeof Components !== 'undefined' && Components.classes &&
+            Components.interfaces)) {
+        //Avert your gaze!
+        Cc = Components.classes,
+        Ci = Components.interfaces;
+        Components.utils['import']('resource://gre/modules/FileUtils.jsm');
+        xpcIsWindows = ('@mozilla.org/windows-registry-key;1' in Cc);
 
+        text.get = function (url, callback) {
+            var inStream, convertStream, fileObj,
+                readData = {};
+
+            if (xpcIsWindows) {
+                url = url.replace(/\//g, '\\');
+            }
+
+            fileObj = new FileUtils.File(url);
+
+            //XPCOM, you so crazy
+            try {
+                inStream = Cc['@mozilla.org/network/file-input-stream;1']
+                           .createInstance(Ci.nsIFileInputStream);
+                inStream.init(fileObj, 1, 0, false);
+
+                convertStream = Cc['@mozilla.org/intl/converter-input-stream;1']
+                                .createInstance(Ci.nsIConverterInputStream);
+                convertStream.init(inStream, "utf-8", inStream.available(),
+                Ci.nsIConverterInputStream.DEFAULT_REPLACEMENT_CHARACTER);
+
+                convertStream.readString(inStream.available(), readData);
+                convertStream.close();
+                inStream.close();
+                callback(readData.value);
+            } catch (e) {
+                throw new Error((fileObj && fileObj.path || '') + ': ' + e);
+            }
+        };
+    }
     return text;
 });
 
-define('text!ev-script/templates/auth.html',[],function () { return '<div class="logo"></div>\n<form>\n    <fieldset>\n        <div class="fieldWrap">\n            <label for="username">Username</label>\n            <input id="username" name="username" class="form-text"type="text"/>\n        </div>\n        <div class="fieldWrap">\n            <label for="password">Password</label>\n            <input id="password" name="password" class="form-text"type="password"/>\n        </div>\n        <div class="form-actions">\n            <input type="submit" class="form-submit action-submit" value="Submit"/>\n        </div>\n    </fieldset>\n</form>\n';});
-
-/*global window*/
-define('ev-script/views/auth',['require','exports','module','jquery','underscore','backbone','ev-script/util/cache','ev-script/util/events','ev-script/util/auth','jquery.cookie','jquery-ui','text!ev-script/templates/auth.html'],function(require, template) {
-
-    
-
-    var $ = require('jquery'),
-        _ = require('underscore'),
-        Backbone = require('backbone'),
-        cacheUtil = require('ev-script/util/cache'),
-        eventsUtil = require('ev-script/util/events'),
-        authUtil = require('ev-script/util/auth');
-
-    require('jquery.cookie');
-    require('jquery-ui');
-
-    return Backbone.View.extend({
-        template: _.template(require('text!ev-script/templates/auth.html')),
-        initialize: function(options) {
-            this.appId = options.appId;
-            this.config = cacheUtil.getAppConfig(this.appId);
-            this.appEvents = eventsUtil.getEvents(this.appId);
-            this.submitCallback = options.submitCallback || function() {};
-        },
-        render: function() {
-            var html = this.template();
-            this.$dialog = $('<div class="ev-auth"></div>');
-            this.$el.after(this.$dialog);
-            this.$dialog.dialog({
-                title: 'Ensemble Video Login - ' + this.config.ensembleUrl,
-                modal: true,
-                draggable: false,
-                resizable: false,
-                width: Math.min(540, $(window).width() - 20),
-                height: 250,
-                dialogClass: 'ev-dialog',
-                create: _.bind(function(event, ui) {
-                    this.$dialog.html(html);
-                }, this),
-                close: _.bind(function(event, ui) {
-                    this.$dialog.dialog('destroy').remove();
-                    this.appEvents.trigger('hidePickers');
-                }, this)
-            });
-            $('form', this.$dialog).submit(_.bind(function(e) {
-                var $form = $(e.target);
-                var username = $('#username', $form).val();
-                var password = $('#password', $form).val();
-                if (username && password) {
-                    authUtil.setAuth(this.config.authId, this.config.authDomain, this.config.authPath, username, password);
-                    this.$dialog.dialog('destroy').remove();
-                    this.submitCallback();
-                }
-                e.preventDefault();
-            }, this));
-        }
-    });
-
-});
-
-define('ev-script/views/base',['require','jquery','underscore','backbone','ev-script/util/auth','ev-script/util/events','ev-script/util/cache','ev-script/views/auth'],function(require) {
-
-    
-
-    var $ = require('jquery'),
-        _ = require('underscore'),
-        Backbone = require('backbone'),
-        root = this,
-        authUtil = require('ev-script/util/auth'),
-        eventsUtil = require('ev-script/util/events'),
-        cacheUtil = require('ev-script/util/cache'),
-        AuthView = require('ev-script/views/auth');
-
-    var getCachedValue = function(ensembleUrl, user, cache, key) {
-        return cacheUtil.getUserCache(ensembleUrl, user).get(cache).get(key);
-    };
-
-    var setCachedValue = function(ensembleUrl, user, cache, key, value) {
-        return cacheUtil.getUserCache(ensembleUrl, user).get(cache).set(key, value);
-    };
-
-    return Backbone.View.extend({
-        initialize: function(options) {
-            this.appId = options.appId;
-            this.config = cacheUtil.getAppConfig(this.appId);
-            this.appEvents = eventsUtil.getEvents(this.appId);
-            this.globalEvents = eventsUtil.getEvents('global');
-        },
-        ajaxError: function(xhr, authCallback) {
-            if (xhr.status === 401) {
-                this.removeAuth();
-                var authView = new AuthView({
-                    el: this.el,
-                    submitCallback: authCallback,
-                    appId: this.appId
-                });
-                authView.render();
-            } else if (xhr.status === 500) {
-                // Making an assumption that root is window here...
-                root.alert('It appears there is an issue with the Ensemble Video installation.');
-            } else if (xhr.status === 404) {
-                root.alert('Could not find requested resource.  This is likely a problem with the configured Ensemble Video base url.');
-            } else if (xhr.status !== 0) {
-                root.alert('An unexpected error occurred.  Check the server log for more details.');
-            }
-        },
-        getUser: function() {
-            return authUtil.getUser(this.config.authId);
-        },
-        setAuth: function(username, password) {
-            authUtil.setAuth(this.config.authId, this.config.authDomain, this.config.authPath, username, password);
-        },
-        removeAuth: function() {
-            authUtil.removeAuth(this.config.authId, this.config.authPath);
-        },
-        hasAuth: function() {
-            return authUtil.hasAuth(this.config.authId);
-        },
-        getCachedVideos: function(user, key) {
-            return getCachedValue(this.config.ensembleUrl, user, 'videos', key);
-        },
-        setCachedVideos: function(user, key, value) {
-            return setCachedValue(this.config.ensembleUrl, user, 'videos', key, value);
-        },
-        getCachedPlaylists: function(user, key) {
-            return getCachedValue(this.config.ensembleUrl, user, 'playlists', key);
-        },
-        setCachedPlaylists: function(user, key, value) {
-            return setCachedValue(this.config.ensembleUrl, user, 'playlists', key, value);
-        },
-        getCachedLibs: function(user, key) {
-            return getCachedValue(this.config.ensembleUrl, user, 'libs', key);
-        },
-        setCachedLibs: function(user, key, value) {
-            return setCachedValue(this.config.ensembleUrl, user, 'libs', key, value);
-        },
-        getCachedOrgs: function(user) {
-            return cacheUtil.getUserCache(this.config.ensembleUrl, user).get('orgs');
-        },
-        setCachedOrgs: function(user, value) {
-            return cacheUtil.getUserCache(this.config.ensembleUrl, user).set('orgs', value);
-        }
-    });
-
-});
-
-define('text!ev-script/templates/hider.html',[],function () { return '<a class="action-hide" href="#" title="Hide Picker">Hide</a>\n<% if (hasAuth) { %>\n    <a class="action-logout" href="#" title="Logout">Logout</a>\n<% } %>\n';});
+define('text!ev-script/templates/hider.html',[],function () { return '<a class="action-hide" href="#" title="Hide Picker">Hide</a>\n<% if (isAuthenticated) { %>\n    <a class="action-logout" href="#" title="Logout <%= username %>">Logout</a>\n<% } %>\n';});
 
 define('ev-script/views/hider',['require','underscore','ev-script/views/base','text!ev-script/templates/hider.html'],function(require) {
 
@@ -1067,37 +999,44 @@ define('ev-script/views/hider',['require','underscore','ev-script/views/base','t
         initialize: function(options) {
             BaseView.prototype.initialize.call(this, options);
             _.bindAll(this, 'hideHandler', 'logoutHandler', 'authHandler', 'render');
-            this.picker = options.picker;
-            this.globalEvents.on('authSet', this.authHandler);
-            this.globalEvents.on('authRemoved', this.authHandler);
+            this.globalEvents.on('loggedIn', this.authHandler);
+            this.globalEvents.on('loggedOut', this.authHandler);
+            this.field = options.field;
         },
         events: {
             'click a.action-hide': 'hideHandler',
             'click a.action-logout': 'logoutHandler'
         },
-        authHandler: function(authId) {
-            if (authId === this.config.authId) {
+        authHandler: function(ensembleUrl) {
+            if (ensembleUrl === this.config.ensembleUrl) {
                 this.render();
             }
         },
         render: function() {
+            var username = '';
+            if (this.info.get('ApplicationVersion') && this.auth.isAuthenticated()) {
+                username = this.auth.getUser().get('UserName');
+            }
             this.$el.html(this.template({
-                hasAuth: this.hasAuth()
+                isAuthenticated: this.auth.isAuthenticated(),
+                username: username
             }));
         },
         hideHandler: function(e) {
-            this.picker.hidePicker();
+            this.appEvents.trigger('hidePicker', this.field.id);
             e.preventDefault();
         },
         logoutHandler: function(e) {
-            this.removeAuth();
+            this.auth.logout().always(this.appEvents.trigger('hidePickers'));
             e.preventDefault();
         }
     });
 
 });
 
-define('ev-script/views/picker',['require','jquery','underscore','ev-script/views/base','ev-script/views/hider'],function(require) {
+define('text!ev-script/templates/picker.html',[],function () { return '<div id="<%= id %>-hider" class="ev-hider"></div>\n<div id="<%= id %>-filter-block" class="ev-filter-block">\n    <div class="loader"></div>\n    <div class="ev-poweredby">\n        <a tabindex="-1" target="_blank" href="http://ensemblevideo.com"><span>Powered by Ensemble</span></a>\n    </div>\n</div>\n<div id="<%= id %>-results" class="ev-results clearfix"></div>\n';});
+
+define('ev-script/views/picker',['require','jquery','underscore','ev-script/views/base','ev-script/views/hider','text!ev-script/templates/picker.html'],function(require) {
 
     
 
@@ -1110,24 +1049,46 @@ define('ev-script/views/picker',['require','jquery','underscore','ev-script/view
      * Encapsulates views to manage search, display and selection of Ensemble videos and playlists.
      */
     return BaseView.extend({
+        template: _.template(require('text!ev-script/templates/picker.html')),
         initialize: function(options) {
             BaseView.prototype.initialize.call(this, options);
-            _.bindAll(this, 'chooseItem', 'hidePicker', 'showPicker', 'hideHandler');
+            _.bindAll(this, 'chooseItem', 'hidePicker', 'showPicker');
             this.$el.hide();
+            this.$el.html(this.template({
+                id: this.id
+            }));
             this.field = options.field;
-            this.appEvents.on('hidePickers', this.hideHandler);
             this.hider = new HiderView({
-                id: this.id + '-hider',
-                tagName: 'div',
-                className: 'ev-hider',
-                picker: this,
+                el: this.$('div.ev-hider'),
+                field: this.field,
                 appId: this.appId
             });
-            this.$el.append(this.hider.$el);
+            var $loader = this.$('div.loader');
+            $loader.on('ajaxSend', _.bind(function(e, xhr, settings) {
+                if (this === settings.picker) {
+                    $loader.addClass('loading');
+                }
+            }, this)).on('ajaxComplete', _.bind(function(e, xhr, settings) {
+                if (this === settings.picker) {
+                    $loader.removeClass('loading');
+                }
+            }, this));
+            this.appEvents.on('hidePickers', function(fieldId) {
+                if (!fieldId || (this.field.id !== fieldId)) {
+                    this.hidePicker();
+                }
+            }, this);
+            this.appEvents.on('showPicker', function(fieldId) {
+                if (this.field.id === fieldId && this.$el.is(':hidden')) {
+                    this.showPicker();
+                }
+            }, this);
+            this.appEvents.on('hidePicker', function(fieldId) {
+                if (this.field.id === fieldId) {
+                    this.hidePicker();
+                }
+            }, this);
             this.hider.render();
-        },
-        events: {
-            'click a.action-add': 'chooseItem'
         },
         chooseItem: function(e) {
             var id = $(e.target).attr('rel');
@@ -1137,7 +1098,7 @@ define('ev-script/views/picker',['require','jquery','underscore','ev-script/view
                 content: content.toJSON()
             });
             this.field.model.set(this.model.attributes);
-            this.hidePicker();
+            this.appEvents.trigger('hidePicker', this.field.id);
             e.preventDefault();
         },
         hidePicker: function() {
@@ -1147,19 +1108,14 @@ define('ev-script/views/picker',['require','jquery','underscore','ev-script/view
             // In case our authentication status has changed...re-render our hider
             this.hider.render();
             this.$el.fadeIn('fast');
-        },
-        hideHandler: function(picker) {
-            if(!picker || (this !== picker)) {
-                this.hidePicker();
-            }
         }
     });
 
 });
 
-define('text!ev-script/templates/video-search.html',[],function () { return '<form>\n    <label for="<%= id %>">Search Ensemble:</label>\n    <input id="<%= id %>" type="text" class="form-text search" value="<%- searchVal %>" />\n    <select class="form-select source">\n      <option value="content" <% if (sourceId === \'content\') { print(\'selected="selected"\'); } %>>Media Library</option>\n      <option value="shared" <% if (sourceId === \'shared\') { print(\'selected="selected"\'); } %>>Shared Library</option>\n    </select>\n    <input type="submit" value="Go" class="form-submit" />\n    <div class="loader"></div>\n    <div class="ev-poweredby"><a tabindex="-1" target="_blank" href="http://ensemblevideo.com"><span>Powered by Ensemble</span></a></div>\n</form>\n';});
+define('text!ev-script/templates/search.html',[],function () { return '<form>\n    <label for="<%= id %>">Search:</label>\n    <input id="<%= id %>" type="text" class="form-text search" value="<%- searchVal %>" title="Search Videos" />\n    <input type="submit" value="Go" class="form-submit" />\n</form>\n';});
 
-define('ev-script/views/search',['require','underscore','ev-script/views/base','text!ev-script/templates/video-search.html'],function(require) {
+define('ev-script/views/search',['require','underscore','ev-script/views/base','text!ev-script/templates/search.html'],function(require) {
 
     
 
@@ -1167,40 +1123,28 @@ define('ev-script/views/search',['require','underscore','ev-script/views/base','
         BaseView = require('ev-script/views/base');
 
     return BaseView.extend({
-        template: _.template(require('text!ev-script/templates/video-search.html')),
+        template: _.template(require('text!ev-script/templates/search.html')),
         initialize: function(options) {
             BaseView.prototype.initialize.call(this, options);
             _.bindAll(this, 'searchHandler', 'doSearch', 'autoSearch');
             this.picker = options.picker;
+            this.callback = options.callback || function() {};
         },
         events: {
             'submit form': 'searchHandler',
-            'change .source': 'searchHandler',
             'keyup .search': 'autoSearch'
         },
         render: function() {
             this.$el.html(this.template({
                 id: this.id + '-input',
-                searchVal: this.picker.model.get('search'),
-                sourceId: this.picker.model.get('sourceId')
+                searchVal: this.picker.model.get('search')
             }));
-            var $loader = this.$('div.loader');
-            $loader.on('ajaxSend', _.bind(function(e, xhr, settings) {
-                if (this.picker === settings.picker) {
-                    $loader.addClass('loading');
-                }
-            }, this)).on('ajaxComplete', _.bind(function(e, xhr, settings) {
-                if (this.picker === settings.picker) {
-                    $loader.removeClass('loading');
-                }
-            }, this));
         },
         doSearch: function() {
             this.picker.model.set({
-                search: this.$('.search').val(),
-                sourceId: this.$('.source').val()
+                search: this.$('.search').val()
             });
-            this.picker.loadVideos();
+            this.callback();
         },
         searchHandler: function(e) {
             this.doSearch();
@@ -1217,6 +1161,353 @@ define('ev-script/views/search',['require','underscore','ev-script/views/base','
                     this.doSearch();
                 }, this), 1000);
             }
+        }
+    });
+
+});
+
+define('text!ev-script/templates/library-type-select.html',[],function () { return '<form>\n    <label for="<%= id %>">Type:</label>\n    <select id="<%= id %>" class="form-select source" title="Select Library Type">\n      <option value="content" <% if (sourceId === \'content\') { print(\'selected="selected"\'); } %>>Media Library</option>\n      <option value="shared" <% if (sourceId === \'shared\') { print(\'selected="selected"\'); } %>>Shared Library</option>\n    </select>\n    <input type="submit" value="Go" class="form-submit" />\n</form>\n';});
+
+define('ev-script/views/library-type-select',['require','underscore','ev-script/views/base','text!ev-script/templates/library-type-select.html'],function(require) {
+
+    
+
+    var _ = require('underscore'),
+        BaseView = require('ev-script/views/base');
+
+    return BaseView.extend({
+        template: _.template(require('text!ev-script/templates/library-type-select.html')),
+        initialize: function(options) {
+            BaseView.prototype.initialize.call(this, options);
+            _.bindAll(this, 'changeHandler');
+            this.picker = options.picker;
+            this.callback = options.callback || function() {};
+        },
+        events: {
+            'change .source': 'changeHandler'
+        },
+        render: function() {
+            this.$el.html(this.template({
+                id: this.id + '-select',
+                sourceId: this.picker.model.get('sourceId')
+            }));
+        },
+        changeHandler: function(e) {
+            this.picker.model.set({
+                sourceId: this.$('.source').val()
+            });
+            this.callback();
+            e.preventDefault();
+        }
+    });
+
+});
+
+define('text!ev-script/templates/options.html',[],function () { return '<% collection.each(function(item) { %>\n    <option value="<%= item.id %>" <% if (selectedId === item.id) { print(\'selected="selected"\'); } %>><%- item.get(\'Name\') %></option>\n<% }); %>\n';});
+
+define('ev-script/views/organization-select',['require','underscore','ev-script/views/base','text!ev-script/templates/options.html'],function(require) {
+
+    
+
+    var _ = require('underscore'),
+        BaseView = require('ev-script/views/base');
+
+    return BaseView.extend({
+        template: _.template(require('text!ev-script/templates/options.html')),
+        initialize: function(options) {
+            BaseView.prototype.initialize.call(this, options);
+            _.bindAll(this, 'render');
+            this.picker = options.picker;
+            this.$el.html('<option value="-1">Loading...</option>');
+            this.collection.on('reset', this.render);
+        },
+        render: function() {
+            var selectedId = this.picker.model.get('organizationId') || this.auth.getUser().get('OrganizationID');
+            this.$el.html(this.template({
+                selectedId: selectedId,
+                collection: this.collection
+            }));
+            this.$el.trigger('change');
+        }
+    });
+
+});
+
+define('ev-script/collections/base',['require','jquery','underscore','backbone','ev-script/util/cache'],function(require) {
+
+    
+
+    var $ = require('jquery'),
+        _ = require('underscore'),
+        Backbone = require('backbone'),
+        cacheUtil = require('ev-script/util/cache');
+
+    return Backbone.Collection.extend({
+        initialize: function(collections, options) {
+            this.requiresAuth = true;
+            this.appId = options.appId;
+            this.config = cacheUtil.getAppConfig(this.appId);
+            this.auth = cacheUtil.getAppAuth(this.appId);
+            this.info = cacheUtil.getAppInfo(this.appId);
+        },
+        model: Backbone.Model.extend({
+            idAttribute: 'ID'
+        }),
+        getCached: function(key) {},
+        setCached: function(key, resp) {},
+        clearCache: function(key) {},
+        parse: function(response) {
+            return response.Data;
+        },
+        fetch: function(options) {
+            if (options && options.success) {
+                options.success = _.wrap(options.success, _.bind(function(success) {
+                    // We've successfully queried the API for something that
+                    // requires authentication but we're in an unauthenticated
+                    // state.  Double-check our authentication and proceed.
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    if (this.requiresAuth && !this.auth.isAuthenticated()) {
+                        this.auth.fetchUser()
+                        .always(function() {
+                            success.apply(this, args);
+                        });
+                    } else {
+                        success.apply(this, args);
+                    }
+                }, this));
+                // TODO - maybe wrap error to handle 401?
+            }
+            return Backbone.Collection.prototype.fetch.call(this, options);
+        },
+        sync: function(method, collection, options) {
+            _.defaults(options || (options = {}), {
+                xhrFields: { withCredentials: true }
+            });
+            if (method === 'read') {
+                var cached = this.getCached(options.cacheKey);
+                if (cached) {
+                    var deferred = $.Deferred();
+                    if (options.success) {
+                        deferred.done(options.success);
+                    }
+                    return deferred.resolve(cached).promise();
+                } else {
+                    // Grab the response and cache
+                    options.success = options.success || function(collection, response, options) {};
+                    options.success = _.wrap(options.success, _.bind(function(success) {
+                        this.setCached(options.cacheKey, arguments[1]);
+                        success.apply(this, Array.prototype.slice.call(arguments, 1));
+                    }, this));
+                    return Backbone.Collection.prototype.sync.call(this, method, collection, options);
+                }
+            } else {
+                return Backbone.Collection.prototype.sync.call(this, method, collection, options);
+            }
+        }
+    });
+
+});
+
+define('ev-script/collections/organizations',['require','ev-script/collections/base','ev-script/util/cache'],function(require) {
+
+    
+
+    var BaseCollection = require('ev-script/collections/base'),
+        cacheUtil = require('ev-script/util/cache');
+
+    return BaseCollection.extend({
+        initialize: function(models, options) {
+            BaseCollection.prototype.initialize.call(this, models, options);
+        },
+        _cache: function(key, resp) {
+            var cachedValue = null,
+                user = this.auth.getUser(),
+                userCache = user ? cacheUtil.getUserCache(this.config.ensembleUrl, user.id) : null;
+            return userCache ? userCache[resp ? 'set' : 'get'](key, resp) : null;
+        },
+        getCached: function(key) {
+            return this._cache('orgs');
+        },
+        setCached: function(key, resp) {
+            return this._cache('orgs', resp);
+        },
+        url: function() {
+            var api_url = this.config.ensembleUrl + '/api/Organizations';
+            // Make this arbitrarily large so we can retrieve ALL orgs in a single request
+            var sizeParam = 'PageSize=9999';
+            var indexParam = 'PageIndex=1';
+            var url = api_url + '?' + sizeParam + '&' + indexParam;
+            return this.config.urlCallback ? this.config.urlCallback(url) : url;
+        }
+    });
+
+});
+
+define('ev-script/views/library-select',['require','underscore','ev-script/views/base','text!ev-script/templates/options.html'],function(require) {
+
+    
+
+    var _ = require('underscore'),
+        BaseView = require('ev-script/views/base');
+
+    return BaseView.extend({
+        template: _.template(require('text!ev-script/templates/options.html')),
+        initialize: function(options) {
+            BaseView.prototype.initialize.call(this, options);
+            _.bindAll(this, 'render');
+            this.picker = options.picker;
+            this.$el.html('<option value="-1">Loading...</option>');
+            this.collection.on('reset', this.render);
+        },
+        render: function() {
+            var selectedId = this.picker.model.get('libraryId') || this.auth.getUser().get('LibraryID');
+            this.$el.html(this.template({
+                selectedId: selectedId,
+                collection: this.collection
+            }));
+            this.$el.trigger('change');
+        }
+    });
+
+});
+
+define('ev-script/collections/libraries',['require','ev-script/collections/base','ev-script/util/cache'],function(require) {
+
+    
+
+    var BaseCollection = require('ev-script/collections/base'),
+        cacheUtil = require('ev-script/util/cache');
+
+    return BaseCollection.extend({
+        initialize: function(models, options) {
+            BaseCollection.prototype.initialize.call(this, models, options);
+            this.filterValue = options.organizationId || '';
+        },
+        _cache: function(key, resp) {
+            var cachedValue = null,
+                user = this.auth.getUser(),
+                userCache = user ? cacheUtil.getUserCache(this.config.ensembleUrl, user.id) : null;
+            if (userCache) {
+                var libsCache = userCache.get('libs');
+                if (!libsCache) {
+                    userCache.set('libs', libsCache = new cacheUtil.Cache());
+                }
+                cachedValue = libsCache[resp ? 'set' : 'get'](key, resp);
+            }
+            return cachedValue;
+        },
+        getCached: function(key) {
+            return this._cache(key);
+        },
+        setCached: function(key, resp) {
+            return this._cache(key, resp);
+        },
+        url: function() {
+            var api_url = this.config.ensembleUrl + '/api/Libraries';
+            // Make this arbitrarily large so we can retrieve ALL libraries under an org in a single request
+            var sizeParam = 'PageSize=9999';
+            var indexParam = 'PageIndex=1';
+            var onParam = 'FilterOn=OrganizationId';
+            var valueParam = 'FilterValue=' + encodeURIComponent(this.filterValue);
+            var url = api_url + '?' + sizeParam + '&' + indexParam + '&' + onParam + '&' + valueParam;
+            return this.config.urlCallback ? this.config.urlCallback(url) : url;
+        }
+    });
+
+});
+
+define('text!ev-script/templates/unit-selects.html',[],function () { return '<form id="<%= formId %>" class="unit-selects">\n    <label for="<%= orgSelectId %>">Organization:</label>\n    <select id="<%= orgSelectId %>" class="form-select organizations" title="Select Organization"></select>\n    <label for="<%= libSelectId %>">Library:</label>\n    <select id="<%= libSelectId %>" class="form-select libraries" title="Select Library"></select>\n    <input type="submit" value="Go" class="form-submit" />\n</form>\n';});
+
+define('ev-script/views/unit-selects',['require','jquery','underscore','ev-script/views/base','ev-script/views/organization-select','ev-script/collections/organizations','ev-script/views/library-select','ev-script/collections/libraries','text!ev-script/templates/unit-selects.html'],function(require) {
+
+    
+
+    var $ = require('jquery'),
+        _ = require('underscore'),
+        BaseView = require('ev-script/views/base'),
+        OrganizationSelectView = require('ev-script/views/organization-select'),
+        Organizations = require('ev-script/collections/organizations'),
+        LibrarySelectView = require('ev-script/views/library-select'),
+        Libraries = require('ev-script/collections/libraries');
+
+    return BaseView.extend({
+        template: _.template(require('text!ev-script/templates/unit-selects.html')),
+        initialize: function(options) {
+            BaseView.prototype.initialize.call(this, options);
+            _.bindAll(this, 'loadOrgs', 'loadLibraries', 'changeOrganization', 'changeLibrary');
+            this.picker = options.picker;
+            this.id = options.id;
+            this.$el.html(this.template({
+                formId: this.id + '-unit-selects',
+                orgSelectId: this.id + '-org-select',
+                libSelectId: this.id + '-lib-select'
+            }));
+            this.orgSelect = new OrganizationSelectView({
+                el: this.$('.organizations'),
+                picker: this.picker,
+                appId: this.appId,
+                collection: new Organizations({}, {
+                    appId: this.appId
+                })
+            });
+            this.libSelect = new LibrarySelectView({
+                el: this.$('.libraries'),
+                picker: this.picker,
+                appId: this.appId,
+                collection: new Libraries({}, {
+                    appId: this.appId
+                })
+            });
+        },
+        events: {
+            'change select.organizations': 'changeOrganization',
+            'change select.libraries': 'changeLibrary'
+        },
+        changeOrganization: function(e) {
+            this.picker.model.set({
+                organizationId: e.target.value
+            });
+            this.loadLibraries();
+        },
+        changeLibrary: function(e) {
+            this.picker.model.set({
+                libraryId: e.target.value
+            });
+        },
+        loadOrgs: function() {
+            var orgs = new Organizations({}, {
+                appId: this.appId
+            });
+            orgs.fetch({
+                picker: this.picker,
+                success: _.bind(function(collection, response, options) {
+                    this.orgSelect.collection.reset(collection.models);
+                }, this),
+                error: _.bind(function(collection, xhr, options) {
+                    this.ajaxError(xhr, _.bind(function() {
+                        this.loadOrgs();
+                    }, this));
+                }, this)
+            });
+        },
+        loadLibraries: function() {
+            var orgId = this.picker.model.get('organizationId');
+            var libs = new Libraries({}, {
+                organizationId: orgId,
+                appId: this.appId
+            });
+            libs.fetch({
+                picker: this.picker,
+                cacheKey: orgId,
+                success: _.bind(function(collection, response, options) {
+                    this.libSelect.collection.reset(collection.models);
+                }, this),
+                error: _.bind(function(collection, xhr, options) {
+                    this.ajaxError(xhr, _.bind(function() {
+                        this.loadLibraries();
+                    }, this));
+                }, this)
+            });
         }
     });
 
@@ -1335,7 +1626,8 @@ define('ev-script/views/results',['require','jquery','underscore','ev-script/vie
             var previewView = new this.previewClass({
                 el: element,
                 model: new this.modelClass(settings),
-                appId: this.appId
+                appId: this.appId,
+                picker: this.picker
             });
             // Stop event propagation so we don't trigger preview of stored field item as well
             e.stopPropagation();
@@ -1419,31 +1711,46 @@ define('ev-script/views/preview',['require','jquery','underscore','ev-script/vie
     return BaseView.extend({
         initialize: function(options) {
             BaseView.prototype.initialize.call(this, options);
-            var $dialogWrap = $('<div class="dialogWrap"></div>');
+            var $dialogWrap = $('<div class="dialogWrap"></div>'),
+                content = this.model.get('content') || {
+                    Title: this.model.get('id')
+                },
+                embedSettings = new this.model.constructor(this.model.toJSON()),
+                // Desired media dimensions
+                mediaDims = {
+                    width: this.model.get('width') || (this.model instanceof VideoSettings ? 640 : 800),
+                    height: this.model.get('height') || (this.model instanceof VideoSettings ? 360 : 850)
+                },
+                // Dialog dimensions TBD
+                dialogDims = {},
+                // Desired difference between media width and containing dialog width
+                widthOffset = 50,
+                // Desired difference between media height and containing dialog height
+                heightOffset = 140,
+                // Used for scaling media dimensions to fit within desired dialog size
+                ratio,
+                // Maximum width of media based on desired dialog width
+                maxWidth,
+                // Our dialog
+                $dialog;
             this.$el.after($dialogWrap);
-            var content = this.model.get('content');
-            var width = this.model.get('width');
-            width = (width ? width : (this.model instanceof VideoSettings ? 640 : 800));
-            var height = this.model.get('height');
-            height = (height ? height : (this.model instanceof VideoSettings ? 360 : 850));
-            var embedSettings = new this.model.constructor(this.model.toJSON());
-            var dialogWidth = width + 50;
-            var dialogHeight = height + 140;
-            var maxWidth = $(window).width() - 20;
-            // Contain preview within window
-            if (dialogWidth > maxWidth) {
-                var origWidth = dialogWidth;
-                dialogWidth = maxWidth;
-                var ratio = maxWidth / origWidth;
-                embedSettings.set('width', width * ratio);
-                dialogHeight = dialogHeight * ratio;
-                embedSettings.set('height', height * ratio);
+            dialogDims.width = Math.min(mediaDims.width + widthOffset, $(window).width() - this.config.dialogMargin);
+            dialogDims.height = Math.min(mediaDims.height + heightOffset, $(window).height() - this.config.dialogMargin);
+            maxWidth = dialogDims.width - widthOffset;
+            // Only bother scaling if we're dealing with videos and if width is
+            // too big
+            if (this.model instanceof VideoSettings && mediaDims.width > maxWidth) {
+                ratio = maxWidth / mediaDims.width;
+                mediaDims.width = mediaDims.width * ratio;
+                mediaDims.height = mediaDims.height * ratio;
             }
-            $dialogWrap.dialog({
+            embedSettings.set('width', mediaDims.width);
+            embedSettings.set('height', mediaDims.height);
+            $dialog = $dialogWrap.dialog({
                 title: content.Title || content.Name,
                 modal: true,
-                width: dialogWidth,
-                height: dialogHeight,
+                width: dialogDims.width,
+                height: dialogDims.height,
                 draggable: false,
                 resizable: false,
                 dialogClass: 'ev-dialog',
@@ -1490,28 +1797,102 @@ define('ev-script/views/video-embed',['require','underscore','ev-script/views/ba
 
 });
 
-define('ev-script/models/video-encoding',['require','backbone','underscore','ev-script/util/cache'],function(require) {
+define('ev-script/models/base',['require','jquery','underscore','backbone','ev-script/util/cache','ev-script/collections/base'],function(require) {
 
     
 
-    var Backbone = require('backbone'),
+    var $ = require('jquery'),
         _ = require('underscore'),
-        cacheUtil = require('ev-script/util/cache');
+        Backbone = require('backbone'),
+        cacheUtil = require('ev-script/util/cache'),
+        BaseCollection = require('ev-script/collections/base');
 
     return Backbone.Model.extend({
-        idAttribute: 'videoID',
         initialize: function(attributes, options) {
             this.appId = options.appId;
             this.config = cacheUtil.getAppConfig(this.appId);
         },
+        getCached: function() {},
+        setCached: function() {},
+        fetch: function(options) {
+            if (options.success) {
+                options.success = _.wrap(options.success, _.bind(function(success) {
+                    // We've successfully queried the API for something that
+                    // requires authentication but we're in an unauthenticated
+                    // state.  Double-check our authentication and proceed.
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    if (this.requiresAuth && !this.auth.isAuthenticated()) {
+                        this.auth.fetchUser()
+                        .always(function() {
+                            success.apply(this, args);
+                        });
+                    } else {
+                        success.apply(this, args);
+                    }
+                }, this));
+                // TODO - maybe wrap error to handle 401?
+            }
+            return Backbone.Model.prototype.fetch.call(this, options);
+        },
+        sync: function(method, collection, options) {
+            _.defaults(options || (options = {}), {
+                xhrFields: { withCredentials: true }
+            });
+            if (method === 'read') {
+                var cached = this.getCached(options.cacheKey);
+                if (cached) {
+                    var deferred = $.Deferred();
+                    if (options.success) {
+                        deferred.done(options.success);
+                    }
+                    return deferred.resolve(cached).promise();
+                } else {
+                    // Grab the response and cache
+                    options.success = options.success || function(collection, response, options) {};
+                    options.success = _.wrap(options.success, _.bind(function(success) {
+                        this.setCached(options.cacheKey, arguments[1]);
+                        success.apply(this, Array.prototype.slice.call(arguments, 1));
+                    }, this));
+                    return Backbone.Model.prototype.sync.call(this, method, collection, options);
+                }
+            } else {
+                return Backbone.Model.prototype.sync.call(this, method, collection, options);
+            }
+        }
+    });
+
+});
+
+define('ev-script/models/video-encoding',['require','backbone','ev-script/models/base','underscore','ev-script/util/cache'],function(require) {
+
+    
+
+    var Backbone = require('backbone'),
+        BaseModel = require('ev-script/models/base'),
+        _ = require('underscore'),
+        cacheUtil = require('ev-script/util/cache');
+
+    return BaseModel.extend({
+        idAttribute: 'videoID',
+        initialize: function(attributes, options) {
+            BaseModel.prototype.initialize.call(this, attributes, options);
+            this.requiresAuth = false;
+        },
+        // TODO - cache responses
+        getCached: function(key) {},
+        setCached: function(key, resp) {},
         url: function() {
-            return this.config.ensembleUrl + '/app/api/content/show.json/' + this.get('fetchId');
+            // Note the response is actually JSONP.  We'll strip the padding
+            // below with our dataFilter.
+            var url = this.config.ensembleUrl + '/app/api/content/show.json/' + this.get('fetchId');
+            return this.config.urlCallback ? this.config.urlCallback(url) : url;
         },
         getDims: function() {
-            var dimsStrs = this.get('dimensions').split('x');
-            var dims = [];
-            dims[0] = parseInt(dimsStrs[0], 10);
-            dims[1] = parseInt(dimsStrs[1], 10);
+            var dimsRaw = this.get('dimensions') || "640x360",
+                dimsStrs = dimsRaw.split('x'),
+                dims = [];
+            dims[0] = parseInt(dimsStrs[0], 10) || 640;
+            dims[1] = parseInt(dimsStrs[1], 10) || 360;
             return dims;
         },
         getRatio: function() {
@@ -1528,11 +1909,21 @@ define('ev-script/models/video-encoding',['require','backbone','underscore','ev-
             if (_.isArray(response.dataSet.encodings)) {
                 // This is a collection, so return the highest bitrate encoding
                 return _.max(response.dataSet.encodings, function(encoding, index, encodings) {
-                    return parseInt(encoding.bitrate, 10);
+                    return parseInt(encoding.bitRate, 10);
                 });
             } else {
                 return response.dataSet.encodings;
             }
+        },
+        sync: function(method, model, options) {
+            _.extend(options, {
+                dataFilter: function(data) {
+                    // Strip padding from JSONP response
+                    var match = data.match(/\{[\s\S]*\}/);
+                    return match ? match[0] : data;
+                }
+            });
+            return Backbone.sync.call(this, method, model, options);
         }
     });
 
@@ -1558,6 +1949,7 @@ define('ev-script/views/video-preview',['require','underscore','ev-script/views/
             }, {
                 appId: this.appId
             });
+            this.picker = options.picker;
             var success = _.bind(function() {
                 if (!this.model.get('width') || !this.model.get('height')) {
                     this.model.set({
@@ -1569,8 +1961,10 @@ define('ev-script/views/video-preview',['require','underscore','ev-script/views/
             }, this);
             if (this.encoding.isNew()) {
                 this.encoding.fetch({
-                    dataType: 'jsonp',
-                    success: success
+                    success: success,
+                    // The loader indicator will show if it detects an AJAX
+                    // request on our picker
+                    picker: this.picker
                 });
             } else {
                 success();
@@ -1627,57 +2021,345 @@ define('ev-script/views/video-results',['require','jquery','underscore','ev-scri
 
 });
 
-define('ev-script/collections/base',['require','underscore','backbone','ev-script/util/cache'],function(require) {
+define('ev-script/collections/videos',['require','ev-script/collections/base','ev-script/util/cache'],function(require) {
 
     
 
-    var _ = require('underscore'),
-        Backbone = require('backbone'),
+    var BaseCollection = require('ev-script/collections/base'),
         cacheUtil = require('ev-script/util/cache');
-
-    return Backbone.Collection.extend({
-        initialize: function(models, options) {
-            this.appId = options.appId;
-            this.config = cacheUtil.getAppConfig(this.appId);
-        },
-        model: Backbone.Model.extend({
-            idAttribute: 'ID'
-        }),
-        parse: function(response) {
-            return response.Data;
-        }
-    });
-
-});
-
-define('ev-script/collections/videos',['require','ev-script/collections/base'],function(require) {
-
-    
-
-    var BaseCollection = require('ev-script/collections/base');
 
     return BaseCollection.extend({
         initialize: function(models, options) {
             BaseCollection.prototype.initialize.call(this, models, options);
+            this.libraryId = options.libraryId || '';
             this.filterOn = options.filterOn || '';
             this.filterValue = options.filterValue || '';
             this.sourceUrl = options.sourceId === 'shared' ? '/api/SharedContent' : '/api/Content';
             this.pageIndex = 1;
         },
+        _cache: function(key, resp) {
+            var cachedValue = null,
+                user = this.auth.getUser(),
+                userCache = user ? cacheUtil.getUserCache(this.config.ensembleUrl, user.id) : null;
+            if (userCache) {
+                var videosCache = userCache.get('videos');
+                if (!videosCache) {
+                    userCache.set('videos', videosCache = new cacheUtil.Cache());
+                }
+                cachedValue = videosCache[resp ? 'set' : 'get'](key, resp);
+            }
+            return cachedValue;
+        },
+        getCached: function(key) {
+            return this._cache(key);
+        },
+        setCached: function(key, resp) {
+            return this._cache(key, resp);
+        },
+        clearCache: function() {
+            var user = this.auth.getUser(),
+                userCache = user ? cacheUtil.getUserCache(this.config.ensembleUrl, user.id) : null;
+            if (userCache) {
+                userCache.set('videos', null);
+            }
+        },
         url: function() {
-            var api_url = this.config.ensembleUrl + this.sourceUrl;
-            var sizeParam = 'PageSize=' + this.config.pageSize;
-            var indexParam = 'PageIndex=' + this.pageIndex;
-            var onParam = 'FilterOn=' + encodeURIComponent(this.filterOn);
-            var valueParam = 'FilterValue=' + encodeURIComponent(this.filterValue);
-            var url = api_url + '?' + sizeParam + '&' + indexParam + '&' + onParam + '&' + valueParam;
+            var api_url = this.config.ensembleUrl + this.sourceUrl,
+                sizeParam = 'PageSize=' + this.config.pageSize,
+                indexParam = 'PageIndex=' + this.pageIndex,
+                onParam = 'FilterOn=' + encodeURIComponent(this.filterOn),
+                valueParam = 'FilterValue=' + encodeURIComponent(this.filterValue),
+                url = api_url + '/' + this.libraryId + '?' + sizeParam + '&' + indexParam + '&' + onParam + '&' + valueParam;
             return this.config.urlCallback ? this.config.urlCallback(url) : url;
         }
     });
 
 });
 
-define('ev-script/views/video-picker',['require','jquery','underscore','ev-script/views/picker','ev-script/views/search','ev-script/views/video-results','ev-script/collections/videos'],function(require) {
+define('ev-script/collections/media-workflows',['require','ev-script/collections/base','ev-script/util/cache'],function(require) {
+
+    
+
+    var BaseCollection = require('ev-script/collections/base'),
+        cacheUtil = require('ev-script/util/cache');
+
+    return BaseCollection.extend({
+        initialize: function(models, options) {
+            BaseCollection.prototype.initialize.call(this, models, options);
+            this.filterValue = options.libraryId || '';
+        },
+        _cache: function(key, resp) {
+            var cachedValue = null,
+                user = this.auth.getUser(),
+                userCache = user ? cacheUtil.getUserCache(this.config.ensembleUrl, user.id) : null;
+            if (userCache) {
+                var workflowsCache = userCache.get('workflows');
+                if (!workflowsCache) {
+                    userCache.set('workflows', workflowsCache = new cacheUtil.Cache());
+                }
+                cachedValue = workflowsCache[resp ? 'set' : 'get'](key, resp);
+            }
+            return cachedValue;
+        },
+        getCached: function(key) {
+            return this._cache(key);
+        },
+        setCached: function(key, resp) {
+            return this._cache(key, resp);
+        },
+        url: function() {
+            var api_url = this.config.ensembleUrl + '/api/MediaWorkflows';
+            // Make this arbitrarily large so we can retrieve ALL workflows in a single request
+            var sizeParam = 'PageSize=9999';
+            var indexParam = 'PageIndex=1';
+            var onParam = 'FilterOn=LibraryId';
+            var valueParam = 'FilterValue=' + encodeURIComponent(this.filterValue);
+            var url = api_url + '?' + sizeParam + '&' + indexParam + '&' + onParam + '&' + valueParam;
+            return this.config.urlCallback ? this.config.urlCallback(url) : url;
+        },
+        // Override base parse in order to grab settings
+        parse: function(response) {
+            this.settings = response.Settings;
+            return response.Data;
+        }
+    });
+
+});
+
+
+define('ev-script/views/workflow-select',['require','underscore','ev-script/views/base','text!ev-script/templates/options.html'],function(require) {
+
+    
+
+    var _ = require('underscore'),
+        BaseView = require('ev-script/views/base');
+
+    return BaseView.extend({
+        template: _.template(require('text!ev-script/templates/options.html')),
+        initialize: function(options) {
+            BaseView.prototype.initialize.call(this, options);
+            _.bindAll(this, 'render');
+            this.$el.html('<option value="-1">Loading...</option>');
+            this.render();
+        },
+        render: function() {
+            var selected = this.collection.findWhere({
+                'IsDefault': true
+            }) || this.collection.at(1);
+            this.$el.html(this.template({
+                selectedId: selected.id,
+                collection: this.collection
+            }));
+        },
+        getSelected: function() {
+            return this.collection.get(this.$('option:selected').val());
+        }
+    });
+
+});
+
+define('text!ev-script/templates/upload.html',[],function () { return '<form class="upload-form" method="POST" action="">\n    <select class="form-select" name="MediaWorkflowID"></select>\n    <div class="fieldWrap">\n        <label for="Title">Title *</label>\n        <input class="form-text" type="text" name="Title" id="Title" />\n    </div>\n    <div class="fieldWrap">\n        <label for="Description">Description</label>\n        <textarea class="form-text" name="Description" id="Description" />\n    </div>\n    <div class="upload"></div>\n</form>\n';});
+
+/*global window,plupload,navigator*/
+define('ev-script/views/upload',['require','jquery','underscore','ev-script/views/base','backbone','ev-script/views/workflow-select','ev-script/models/video-settings','plupload','jquery.plupload.queue','text!ev-script/templates/upload.html'],function(require) {
+
+    
+
+    var $ = require('jquery'),
+        _ = require('underscore'),
+        BaseView = require('ev-script/views/base'),
+        Backbone = require('backbone'),
+        WorkflowSelect = require('ev-script/views/workflow-select'),
+        VideoSettings = require('ev-script/models/video-settings');
+
+    // Explicit dependency declaration
+    require('plupload');
+    require('jquery.plupload.queue');
+
+    return BaseView.extend({
+        template: _.template(require('text!ev-script/templates/upload.html')),
+        events: {
+            'change select': 'handleSelect'
+        },
+        initialize: function(options) {
+            BaseView.prototype.initialize.call(this, options);
+            _.bindAll(this, 'render', 'decorateUploader', 'closeDialog', 'handleSelect');
+            this.field = options.field;
+            this.$anchor = this.$el;
+            this.setElement(this.template());
+            this.$upload = this.$('.upload');
+            this.workflows = options.workflows;
+            this.workflowSelect = new WorkflowSelect({
+                appId: this.appId,
+                el: this.$('select')[0],
+                collection: this.workflows
+            });
+            this.render();
+            this.decorateUploader();
+            this.appEvents.on('hidePickers', this.closeDialog);
+        },
+        getWidth: function() {
+            return Math.min(600, $(window).width() - this.config.dialogMargin);
+        },
+        getHeight: function() {
+            return Math.min(400, $(window).height() - this.config.dialogMargin);
+        },
+        decorateUploader: function() {
+            var extensions = this.workflows.settings.SupportedVideo.replace(/\*\./g, '').replace(/;/g, ',').replace(/\s/g, ''),
+                selected = this.workflowSelect.getSelected(),
+                maxUploadSize = parseInt(selected.get('MaxUploadSize'), 10); //,
+                // runtimes = 'html5,html4',
+                // iOS = (navigator.userAgent.indexOf('iPad') > -1) || (navigator.userAgent.indexOf('iPhone') > -1),
+                // MSIE = (navigator.userAgent.indexOf('MSIE') > -1),
+                // Android = (navigator.userAgent.indexOf('Android') > -1),
+                // SafariVersion5 = (navigator.userAgent.match(/Version\/5.*Safari/i) != null) && (navigator.userAgent.indexOf('Chrome') === -1) && !iOS && !Android;
+
+            // runtime selection based on browser
+            // if (iOS) {
+            //     runtimes = 'html5,html4';
+            // } else if (MSIE) {
+            //     runtimes = 'silverlight,html4';
+            // } else if (Android) {
+            //     runtimes = 'flash,html5,html4';
+            // }
+
+            if (this.$upload.pluploadQueue()) {
+                this.$upload.pluploadQueue().destroy();
+            }
+
+            this.$upload.pluploadQueue({
+                url: this.workflows.settings.SubmitUrl,
+                runtimes: 'html5,html4,flash', //runtimes,
+                max_file_size: maxUploadSize > 0 ? maxUploadSize + 'gb' : '12gb',
+                max_file_count: 1,
+                chunk_size: '2mb',
+                unique_names: false,
+                multiple_queues: false,
+                multi_selection: false,
+                drag_drop: true,
+                multipart: true,
+                flash_swf_url: this.config.pluploadFlashPath,
+                // FIXME
+                // silverlight_xap_url: 'FIXME',
+                preinit: {
+                    Init: _.bind(function(up, info) {
+                        // Remove runtime tooltip
+                        $('.plupload_container', this.$upload).removeAttr('title');
+                        // Change text since we only allow single file upload
+                        $('.plupload_add', this.$upload).text('Add file');
+                        $('.plupload_droptext', this.$upload).text('Drag file here.');
+                    }, this),
+                    UploadFile: _.bind(function(up, file) {
+                        up.settings.multipart_params = {
+                            'Title': this.$('#Title').val(),
+                            'Description': this.$('#Description').val(),
+                            'MediaWorkflowID': this.$('select').val()
+                        };
+                    }, this)
+                },
+                init: {
+                    StateChanged: _.bind(function(up) {
+                        switch (up.state) {
+                            case plupload.STARTED:
+                                if (up.state === plupload.STARTED) {
+                                    if ($('.plupload_cancel', this.$upload).length === 0) {
+                                        // Add cancel button
+                                        this.$cancel = $('<a class="plupload_button plupload_cancel" href="#">Cancel upload</a>')
+                                        .insertBefore($('.plupload_filelist_footer .plupload_clearer', this.$upload))
+                                        .click(_.bind(function() {
+                                            up.stop();
+                                            this.decorateUploader();
+                                        }, this));
+                                    }
+                                    if (this.$cancel) {
+                                        this.$cancel.show();
+                                    }
+                                }
+                                break;
+                            case plupload.STOPPED:
+                                if (this.$cancel) {
+                                    this.$cancel.hide();
+                                }
+                                break;
+                        }
+                    }, this),
+                    BeforeUpload: _.bind(function(up, file) {
+                        var $title = this.$('#Title'),
+                            title = $title.val();
+                        if (!title || title.trim() === '') {
+                            $title.focus();
+                            up.stop();
+                            $('.plupload_upload_status', this.$upload).hide();
+                            $('.plupload_buttons', this.$upload).show();
+                        }
+                    }, this),
+                    FilesAdded: _.bind(function(up, files) {
+                        var validExtensions = extensions.split(',');
+                        _.each(files, function(file) {
+                            var parts = file.name.split('.'),
+                                extension = parts[parts.length - 1];
+                            if (!_.contains(validExtensions, extension)) {
+                                up.removeFile(file);
+                                // TODO - error message?
+                            }
+                        });
+                        // Keep the last file in the queue
+                        if (up.files.length > 1) {
+                            up.splice(0, up.files.length - 1);
+                        }
+                    }, this),
+                    UploadComplete: _.bind(function() {
+                        this.closeDialog();
+                    }, this),
+                    FileUploaded: _.bind(function(up, file, info) {
+                        this.appEvents.trigger('fileUploaded');
+                    }, this)
+                }
+            });
+            // Hacks to deal with z-index issue in dialog
+            // see https://github.com/moxiecode/plupload/issues/468
+            this.$upload.pluploadQueue().bind('refresh', function() {
+                $('div.upload > div.plupload').css({ 'z-index': '0' });
+                $('.plupload_button').css({ 'z-index': '1' });
+            });
+            this.$upload.pluploadQueue().refresh();
+        },
+        closeDialog: function() {
+            if (this.$dialog) {
+                this.$dialog.dialog('close');
+            }
+        },
+        handleSelect: function(e) {
+            this.decorateUploader();
+        },
+        render: function() {
+            var $dialogWrap = $('<div class="dialogWrap"></div>'),
+                $dialog;
+            this.$anchor.after($dialogWrap);
+            this.$dialog = $dialogWrap.dialog({
+                title: 'Upload Video to Ensemble',
+                modal: true,
+                width: this.getWidth(),
+                height: this.getHeight(),
+                draggable: false,
+                resizable: false,
+                dialogClass: 'ev-dialog',
+                create: _.bind(function(event, ui) {
+                    $dialogWrap.html(this.$el);
+                }, this),
+                close: _.bind(function(event, ui) {
+                    this.$upload.pluploadQueue().destroy();
+                    $dialogWrap.dialog('destroy').remove();
+                    this.appEvents.off('hidePickers', this.closeDialog);
+                    this.$dialog = null;
+                }, this)
+            });
+        }
+    });
+
+});
+
+define('ev-script/views/video-picker',['require','jquery','underscore','ev-script/views/picker','ev-script/views/search','ev-script/views/library-type-select','ev-script/views/unit-selects','ev-script/views/video-results','ev-script/collections/videos','ev-script/collections/media-workflows','ev-script/views/upload'],function(require) {
 
     
 
@@ -1685,72 +2367,154 @@ define('ev-script/views/video-picker',['require','jquery','underscore','ev-scrip
         _ = require('underscore'),
         PickerView = require('ev-script/views/picker'),
         SearchView = require('ev-script/views/search'),
+        TypeSelectView = require('ev-script/views/library-type-select'),
+        UnitSelectsView = require('ev-script/views/unit-selects'),
         VideoResultsView = require('ev-script/views/video-results'),
-        Videos = require('ev-script/collections/videos');
+        Videos = require('ev-script/collections/videos'),
+        MediaWorkflows = require('ev-script/collections/media-workflows'),
+        UploadView = require('ev-script/views/upload');
 
     return PickerView.extend({
         initialize: function(options) {
             PickerView.prototype.initialize.call(this, options);
-            _.bindAll(this, 'loadVideos');
+            _.bindAll(this, 'loadVideos', 'loadWorkflows', 'changeLibrary', 'handleSubmit', 'uploadHandler');
+            var callback = _.bind(function() {
+                this.loadVideos();
+            }, this);
+            if (this.info.get('ApplicationVersion')) {
+                this.$upload = $('<div class="ev-field-actions"><a href="#" class="action-upload" title="Upload Video"><span>Upload Video<span></a></div>').css('display', 'none');
+                this.$('div.ev-filter-block').prepend(this.$upload);
+            }
             this.searchView = new SearchView({
                 id: this.id + '-search',
                 tagName: 'div',
                 className: 'ev-search',
                 picker: this,
-                appId: this.appId
+                appId: this.appId,
+                callback: callback
             });
-            this.$el.append(this.searchView.$el);
+            this.$('div.ev-filter-block').prepend(this.searchView.$el);
             this.searchView.render();
-            this.resultsView = new VideoResultsView({
-                id: this.id + '-results',
+            this.typeSelectView = new TypeSelectView({
+                id: this.id + '-type-select',
                 tagName: 'div',
-                className: 'ev-results clearfix',
+                className: 'ev-type-select',
+                picker: this,
+                appId: this.appId,
+                callback: callback
+            });
+            this.$('div.ev-filter-block').prepend(this.typeSelectView.$el);
+            this.typeSelectView.render();
+            if (this.info.get('ApplicationVersion')) {
+                this.unitSelects = new UnitSelectsView({
+                    id: this.id + '-unit-selects',
+                    tagName: 'div',
+                    className: 'ev-unit-selects',
+                    picker: this,
+                    appId: this.appId
+                });
+                this.$('div.ev-filter-block').prepend(this.unitSelects.$el);
+            }
+            this.resultsView = new VideoResultsView({
+                el: this.$('div.ev-results'),
                 picker: this,
                 appId: this.appId
             });
             this.$el.append(this.resultsView.$el);
         },
+        events: {
+            'click .action-add': 'chooseItem',
+            'click .action-upload': 'uploadHandler',
+            'change form.unit-selects select.libraries': 'changeLibrary',
+            'submit form.unit-selects': 'handleSubmit'
+        },
+        changeLibrary: function(e) {
+            this.loadVideos();
+            this.loadWorkflows();
+        },
+        handleSubmit: function(e) {
+            this.loadVideos();
+            e.preventDefault();
+        },
+        uploadHandler: function(e) {
+            var uploadView = new UploadView({
+                appId: this.appId,
+                field: this.field,
+                workflows: this.workflows
+            });
+            e.preventDefault();
+        },
         showPicker: function() {
             PickerView.prototype.showPicker.call(this);
-            this.searchView.$('input[type="text"]').focus();
-            this.loadVideos();
+            if (this.info.get('ApplicationVersion')) {
+                this.unitSelects.loadOrgs();
+                this.unitSelects.$('select').filter(':visible').first().focus();
+            } else {
+                this.searchView.$('input[type="text"]').focus();
+                this.loadVideos();
+            }
         },
         loadVideos: function() {
-            var searchVal = $.trim(this.model.get('search').toLowerCase());
-            var sourceId = this.model.get('sourceId');
-            var videos = this.getCachedVideos(this.getUser(), sourceId + searchVal);
-            if (!videos) {
+            var searchVal = $.trim(this.model.get('search').toLowerCase()),
+                sourceId = this.model.get('sourceId'),
+                libraryId = this.model.get('libraryId'),
+                cacheKey = sourceId + libraryId + searchVal,
                 videos = new Videos({}, {
                     sourceId: sourceId,
+                    libraryId: libraryId,
                     filterOn: '',
                     filterValue: searchVal,
                     appId: this.appId
-                });
-                videos.fetch({
-                    picker: this,
-                    success: _.bind(function(collection, response, options) {
-                        var totalRecords = collection.totalResults = parseInt(response.Pager.TotalRecords, 10);
-                        var size = _.size(response.Data);
-                        if (size === totalRecords) {
-                            collection.hasMore = false;
-                        } else {
-                            collection.hasMore = true;
-                            collection.pageIndex += 1;
-                        }
-                        this.setCachedVideos(this.getUser(), sourceId + searchVal, collection);
-                        this.resultsView.collection = collection;
-                        this.resultsView.render();
-                    }, this),
-                    error: _.bind(function(collection, xhr, options) {
-                        this.ajaxError(xhr, _.bind(function() {
-                            this.loadVideos();
-                        }, this));
-                    }, this)
-                });
-            } else {
-                this.resultsView.collection = videos;
-                this.resultsView.render();
-            }
+                }),
+                clearVideosCache = _.bind(function() {
+                    videos.clearCache();
+                    this.loadVideos();
+                }, this);
+            videos.fetch({
+                picker: this,
+                cacheKey: cacheKey,
+                success: _.bind(function(collection, response, options) {
+                    var totalRecords = collection.totalResults = parseInt(response.Pager.TotalRecords, 10);
+                    var size = _.size(response.Data);
+                    if (size === totalRecords) {
+                        collection.hasMore = false;
+                    } else {
+                        collection.hasMore = true;
+                        collection.pageIndex += 1;
+                    }
+                    this.resultsView.collection = collection;
+                    this.resultsView.render();
+                }, this),
+                error: _.bind(function(collection, xhr, options) {
+                    this.ajaxError(xhr, _.bind(function() {
+                        this.loadVideos();
+                    }, this));
+                }, this)
+            });
+            this.appEvents.off('fileUploaded').on('fileUploaded', clearVideosCache);
+        },
+        loadWorkflows: function() {
+            this.workflows = new MediaWorkflows({}, {
+                appId: this.appId
+            });
+            // FIXME - add libraryId (as with playlists)
+            this.workflows.filterValue = this.model.get('libraryId');
+            this.workflows.fetch({
+                cacheKey: this.workflows.filterValue,
+                success: _.bind(function(collection, response, options) {
+                    if (!collection.isEmpty()) {
+                        this.$upload.css('display', 'inline-block');
+                    } else {
+                        this.$upload.css('display', 'none');
+                    }
+                }, this),
+                error: _.bind(function(collection, xhr, options) {
+                    this.ajaxError(xhr, _.bind(function() {
+                        this.loadWorkflows();
+                    }, this));
+                }, this),
+                reset: true
+            });
         }
     });
 
@@ -1871,244 +2635,17 @@ define('ev-script/views/video-settings',['require','jquery','underscore','ev-scr
                 model: this.field.model
             }));
             this.renderSize();
+            var content = this.field.model.get('content');
             this.$el.dialog({
-                title: this.field.model.get('content').Title,
+                title: (content ? content.Title : this.field.model.get('id')),
                 modal: true,
                 autoOpen: false,
                 draggable: false,
                 resizable: false,
                 dialogClass: 'ev-dialog',
-                width: Math.min(340, $(window).width() - 20),
-                height: 320
+                width: Math.min(340, $(window).width() - this.config.dialogMargin),
+                height: Math.min(320, $(window).height() - this.config.dialogMargin)
             });
-        }
-    });
-
-});
-
-define('text!ev-script/templates/options.html',[],function () { return '<% collection.each(function(item) { %>\n    <option value="<%= item.id %>" <% if (selectedId === item.id) { print(\'selected="selected"\'); } %>><%- item.get(\'Name\') %></option>\n<% }); %>\n';});
-
-define('ev-script/views/organization-select',['require','underscore','ev-script/views/base','text!ev-script/templates/options.html'],function(require) {
-
-    
-
-    var _ = require('underscore'),
-        BaseView = require('ev-script/views/base');
-
-    return BaseView.extend({
-        template: _.template(require('text!ev-script/templates/options.html')),
-        initialize: function(options) {
-            BaseView.prototype.initialize.call(this, options);
-            _.bindAll(this, 'render');
-            this.picker = options.picker;
-            this.$el.html('<option value="-1">Loading...</option>');
-            this.collection.on('reset', this.render);
-        },
-        render: function() {
-            this.$el.html(this.template({
-                selectedId: this.picker.model.get('organizationId'),
-                collection: this.collection
-            }));
-            this.$el.trigger('change');
-        }
-    });
-
-});
-
-define('ev-script/collections/organizations',['require','ev-script/collections/base'],function(require) {
-
-    
-
-    var BaseCollection = require('ev-script/collections/base');
-
-    return BaseCollection.extend({
-        initialize: function(models, options) {
-            BaseCollection.prototype.initialize.call(this, models, options);
-        },
-        url: function() {
-            var api_url = this.config.ensembleUrl + '/api/Organizations';
-            // Make this arbitrarily large so we can retrieve ALL orgs in a single request
-            var sizeParam = 'PageSize=9999';
-            var indexParam = 'PageIndex=1';
-            var url = api_url + '?' + sizeParam + '&' + indexParam;
-            return this.config.urlCallback ? this.config.urlCallback(url) : url;
-        }
-    });
-
-});
-
-define('ev-script/views/library-select',['require','underscore','ev-script/views/base','text!ev-script/templates/options.html'],function(require) {
-
-    
-
-    var _ = require('underscore'),
-        BaseView = require('ev-script/views/base');
-
-    return BaseView.extend({
-        template: _.template(require('text!ev-script/templates/options.html')),
-        initialize: function(options) {
-            BaseView.prototype.initialize.call(this, options);
-            _.bindAll(this, 'render');
-            this.picker = options.picker;
-            this.$el.html('<option value="-1">Loading...</option>');
-            this.collection.on('reset', this.render);
-        },
-        render: function() {
-            this.$el.html(this.template({
-                selectedId: this.picker.model.get('libraryId'),
-                collection: this.collection
-            }));
-            this.$el.trigger('change');
-        }
-    });
-
-});
-
-define('ev-script/collections/libraries',['require','ev-script/collections/base'],function(require) {
-
-    
-
-    var BaseCollection = require('ev-script/collections/base');
-
-    return BaseCollection.extend({
-        initialize: function(models, options) {
-            BaseCollection.prototype.initialize.call(this, models, options);
-            this.filterValue = options.organizationId || '';
-        },
-        url: function() {
-            var api_url = this.config.ensembleUrl + '/api/Libraries';
-            // Make this arbitrarily large so we can retrieve ALL libraries under an org in a single request
-            var sizeParam = 'PageSize=9999';
-            var indexParam = 'PageIndex=1';
-            var onParam = 'FilterOn=OrganizationId';
-            var valueParam = 'FilterValue=' + encodeURIComponent(this.filterValue);
-            var url = api_url + '?' + sizeParam + '&' + indexParam + '&' + onParam + '&' + valueParam;
-            return this.config.urlCallback ? this.config.urlCallback(url) : url;
-        }
-    });
-
-});
-
-define('text!ev-script/templates/playlist-select.html',[],function () { return '<form>\n    <label for="<%= orgSelectId %>">Organization:</label>\n    <select id="<%= orgSelectId %>" class="form-select organizations"></select>\n    <label for="<%= libSelectId %>">Library:</label>\n    <select id="<%= libSelectId %>" class="form-select libraries"></select>\n    <input type="submit" value="Go" class="form-submit" />\n    <div class="loader"></div>\n    <div class="ev-poweredby">\n        <a tabindex="-1" target="_blank" href="http://ensemblevideo.com"><span>Powered by Ensemble</span></a>\n    </div>\n</form>\n';});
-
-define('ev-script/views/playlist-select',['require','jquery','underscore','ev-script/views/base','ev-script/views/organization-select','ev-script/collections/organizations','ev-script/views/library-select','ev-script/collections/libraries','text!ev-script/templates/playlist-select.html'],function(require) {
-
-    
-
-    var $ = require('jquery'),
-        _ = require('underscore'),
-        BaseView = require('ev-script/views/base'),
-        OrganizationSelectView = require('ev-script/views/organization-select'),
-        Organizations = require('ev-script/collections/organizations'),
-        LibrarySelectView = require('ev-script/views/library-select'),
-        Libraries = require('ev-script/collections/libraries');
-
-    return BaseView.extend({
-        template: _.template(require('text!ev-script/templates/playlist-select.html')),
-        initialize: function(options) {
-            BaseView.prototype.initialize.call(this, options);
-            _.bindAll(this, 'loadOrgs', 'loadLibraries', 'changeOrganization', 'changeLibrary', 'handleSubmit');
-            this.picker = options.picker;
-            this.id = options.id;
-            var orgSelectId = this.id + '-org-select';
-            var libSelectId = this.id + '-lib-select';
-            this.$el.html(this.template({
-                orgSelectId: orgSelectId,
-                libSelectId: libSelectId
-            }));
-            this.orgSelect = new OrganizationSelectView({
-                el: this.$('.organizations'),
-                picker: this.picker,
-                appId: this.appId,
-                collection: new Organizations({}, {
-                    appId: this.appId
-                })
-            });
-            this.libSelect = new LibrarySelectView({
-                el: this.$('.libraries'),
-                picker: this.picker,
-                appId: this.appId,
-                collection: new Libraries({}, {
-                    appId: this.appId
-                })
-            });
-            var $loader = this.$('div.loader');
-            $loader.on('ajaxSend', _.bind(function(e, xhr, settings) {
-                if (this.picker === settings.picker) {
-                    $loader.addClass('loading');
-                }
-            }, this)).on('ajaxComplete', _.bind(function(e, xhr, settings) {
-                if (this.picker === settings.picker) {
-                    $loader.removeClass('loading');
-                }
-            }, this));
-        },
-        events: {
-            'change select.organizations': 'changeOrganization',
-            'change select.libraries': 'changeLibrary',
-            'submit form': 'handleSubmit'
-        },
-        changeOrganization: function(e) {
-            this.picker.model.set({
-                organizationId: e.target.value
-            });
-            this.loadLibraries();
-        },
-        changeLibrary: function(e) {
-            this.picker.model.set({
-                libraryId: e.target.value
-            });
-            this.picker.loadPlaylists();
-        },
-        handleSubmit: function(e) {
-            this.picker.loadPlaylists();
-            e.preventDefault();
-        },
-        loadOrgs: function() {
-            var orgs = this.getCachedOrgs(this.getUser());
-            if (!orgs) {
-                orgs = new Organizations({}, {
-                    appId: this.appId
-                });
-                orgs.fetch({
-                    picker: this.picker,
-                    success: _.bind(function(collection, response, options) {
-                        this.setCachedOrgs(this.getUser(), collection);
-                        this.orgSelect.collection.reset(collection.models);
-                    }, this),
-                    error: _.bind(function(collection, xhr, options) {
-                        this.ajaxError(xhr, _.bind(function() {
-                            this.loadOrgs();
-                        }, this));
-                    }, this)
-                });
-            } else {
-                this.orgSelect.collection.reset(orgs.models);
-            }
-        },
-        loadLibraries: function() {
-            var orgId = this.picker.model.get('organizationId');
-            var libs = this.getCachedLibs(this.getUser(), orgId);
-            if (!libs) {
-                libs = new Libraries({}, {
-                    organizationId: orgId,
-                    appId: this.appId
-                });
-                libs.fetch({
-                    picker: this.picker,
-                    success: _.bind(function(collection, response, options) {
-                        this.setCachedLibs(this.getUser(), orgId, collection);
-                        this.libSelect.collection.reset(collection.models);
-                    }, this),
-                    error: _.bind(function(collection, xhr, options) {
-                        this.ajaxError(xhr, _.bind(function() {
-                            this.loadLibraries();
-                        }, this));
-                    }, this)
-                });
-            } else {
-                this.libSelect.collection.reset(libs.models);
-            }
         }
     });
 
@@ -2175,101 +2712,150 @@ define('ev-script/views/playlist-results',['require','underscore','jquery','ev-s
 
 });
 
-define('ev-script/collections/playlists',['require','ev-script/collections/base'],function(require) {
+define('ev-script/collections/playlists',['require','ev-script/collections/base','ev-script/util/cache'],function(require) {
 
     
 
-    var BaseCollection = require('ev-script/collections/base');
+    var BaseCollection = require('ev-script/collections/base'),
+        cacheUtil = require('ev-script/util/cache');
 
     return BaseCollection.extend({
         initialize: function(models, options) {
             BaseCollection.prototype.initialize.call(this, models, options);
+            this.libraryId = options.libraryId || '';
             this.filterValue = options.filterValue || '';
             this.pageIndex = 1;
         },
+        _cache: function(key, resp) {
+            var cachedValue = null,
+                user = this.auth.getUser(),
+                userCache = user ? cacheUtil.getUserCache(this.config.ensembleUrl, user.id) : null;
+            if (userCache) {
+                var playlistsCache = userCache.get('playlists');
+                if (!playlistsCache) {
+                    userCache.set('playlists', playlistsCache = new cacheUtil.Cache());
+                }
+                cachedValue = playlistsCache[resp ? 'set' : 'get'](key, resp);
+            }
+            return cachedValue;
+        },
+        getCached: function(key) {
+            return this._cache(key);
+        },
+        setCached: function(key, resp) {
+            return this._cache(key, resp);
+        },
         url: function() {
-            var api_url = this.config.ensembleUrl + '/api/Playlists';
-            var sizeParam = 'PageSize=' + this.config.pageSize;
-            var indexParam = 'PageIndex=' + this.pageIndex;
-            var onParam = 'FilterOn=LibraryId';
-            var valueParam = 'FilterValue=' + encodeURIComponent(this.filterValue);
-            var url = api_url + '?' + sizeParam + '&' + indexParam + '&' + onParam + '&' + valueParam;
+            var api_url = this.config.ensembleUrl + '/api/Playlists',
+                sizeParam = 'PageSize=' + this.config.pageSize,
+                indexParam = 'PageIndex=' + this.pageIndex,
+                url, onParam, valueParam;
+            if (this.info.get('ApplicationVersion')) {
+                onParam = 'FilterOn=Name';
+                valueParam = 'FilterValue=' + encodeURIComponent(this.filterValue);
+                url = api_url + '/' + encodeURIComponent(this.libraryId) + '?' + sizeParam + '&' + indexParam + (this.filterValue ? '&' + onParam + '&' + valueParam : '');
+            } else {
+                onParam = 'FilterOn=LibraryId';
+                valueParam = 'FilterValue=' + encodeURIComponent(this.libraryId);
+                url = api_url + '?' + sizeParam + '&' + indexParam + '&' + onParam + '&' + valueParam;
+            }
             return this.config.urlCallback ? this.config.urlCallback(url) : url;
         }
     });
 
 });
 
-define('ev-script/views/playlist-picker',['require','jquery','underscore','ev-script/views/picker','ev-script/views/playlist-select','ev-script/views/playlist-results','ev-script/collections/playlists'],function(require) {
+define('ev-script/views/playlist-picker',['require','jquery','underscore','ev-script/views/picker','ev-script/views/unit-selects','ev-script/views/search','ev-script/views/playlist-results','ev-script/collections/playlists'],function(require) {
 
     
 
     var $ = require('jquery'),
         _ = require('underscore'),
         PickerView = require('ev-script/views/picker'),
-        PlaylistSelectView = require('ev-script/views/playlist-select'),
+        UnitSelectsView = require('ev-script/views/unit-selects'),
+        SearchView = require('ev-script/views/search'),
         PlaylistResultsView = require('ev-script/views/playlist-results'),
         Playlists = require('ev-script/collections/playlists');
 
     return PickerView.extend({
         initialize: function(options) {
             PickerView.prototype.initialize.call(this, options);
-            _.bindAll(this, 'loadPlaylists');
-            this.playlistSelect = new PlaylistSelectView({
-                id: this.id + '-playlist-select',
+            _.bindAll(this, 'loadPlaylists', 'changeLibrary', 'handleSubmit');
+            if (this.info.get('ApplicationVersion')) {
+                this.searchView = new SearchView({
+                    id: this.id + '-search',
+                    tagName: 'div',
+                    className: 'ev-search',
+                    picker: this,
+                    appId: this.appId,
+                    callback: _.bind(function() {
+                        this.loadPlaylists();
+                    }, this)
+                });
+                this.$('div.ev-filter-block').prepend(this.searchView.$el);
+                this.searchView.render();
+            }
+            this.unitSelects = new UnitSelectsView({
+                id: this.id + '-unit-selects',
                 tagName: 'div',
-                className: 'ev-playlist-select',
+                className: 'ev-unit-selects',
                 picker: this,
                 appId: this.appId
             });
-            this.$el.append(this.playlistSelect.$el);
+            this.$('div.ev-filter-block').prepend(this.unitSelects.$el);
             this.resultsView = new PlaylistResultsView({
-                id: this.id + '-results',
-                tagName: 'div',
-                className: 'ev-results clearfix',
+                el: this.$('div.ev-results'),
                 picker: this,
                 appId: this.appId
             });
             this.$el.append(this.resultsView.$el);
         },
+        events: {
+            'click a.action-add': 'chooseItem',
+            'change form.unit-selects select.libraries': 'changeLibrary',
+            'submit form.unit-selects': 'handleSubmit'
+        },
+        changeLibrary: function(e) {
+            this.loadPlaylists();
+        },
+        handleSubmit: function(e) {
+            this.loadPlaylists();
+            e.preventDefault();
+        },
         showPicker: function() {
             PickerView.prototype.showPicker.call(this);
-            this.playlistSelect.loadOrgs();
-            this.playlistSelect.$('select').filter(':visible').first().focus();
+            this.unitSelects.loadOrgs();
+            this.unitSelects.$('select').filter(':visible').first().focus();
         },
         loadPlaylists: function() {
-            var libraryId = this.model.get('libraryId');
-            var playlists = this.getCachedPlaylists(this.getUser(), libraryId);
-            if(!playlists) {
+            var searchVal = $.trim(this.model.get('search').toLowerCase()),
+                libraryId = this.model.get('libraryId'),
                 playlists = new Playlists({}, {
-                    filterValue: libraryId,
+                    libraryId: libraryId,
+                    filterValue: searchVal,
                     appId: this.appId
                 });
-                playlists.fetch({
-                    picker: this,
-                    success: _.bind(function(collection, response, options) {
-                        var totalRecords = collection.totalResults = parseInt(response.Pager.TotalRecords, 10);
-                        var size = _.size(response.Data);
-                        if(size === totalRecords) {
-                            collection.hasMore = false;
-                        } else {
-                            collection.hasMore = true;
-                            collection.pageIndex += 1;
-                        }
-                        this.setCachedPlaylists(this.getUser(), libraryId, collection);
-                        this.resultsView.collection = collection;
-                        this.resultsView.render();
-                    }, this),
-                    error: _.bind(function(collection, xhr, options) {
-                        this.ajaxError(xhr, _.bind(function() {
-                            this.loadPlaylists();
-                        }, this));
-                    }, this)
-                });
-            } else {
-                this.resultsView.collection = playlists;
-                this.resultsView.render();
-            }
+            playlists.fetch({
+                picker: this,
+                cacheKey: libraryId + searchVal,
+                success: _.bind(function(collection, response, options) {
+                    var totalRecords = collection.totalResults = parseInt(response.Pager.TotalRecords, 10);
+                    var size = _.size(response.Data);
+                    if(size === totalRecords) {
+                        collection.hasMore = false;
+                    } else {
+                        collection.hasMore = true;
+                        collection.pageIndex += 1;
+                    }
+                    this.resultsView.collection = collection;
+                    this.resultsView.render();
+                }, this),
+                error: _.bind(function(collection, xhr, options) {
+                    this.ajaxError(xhr, _.bind(function() {
+                        this.loadPlaylists();
+                    }, this));
+                }, this)
+            });
         }
     });
 
@@ -2335,6 +2921,7 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
             BaseView.prototype.initialize.call(this, options);
             _.bindAll(this, 'chooseHandler', 'optionsHandler', 'removeHandler', 'previewHandler');
             this.$field = options.$field;
+            this.showChoose = true;
             var pickerOptions = {
                 id: this.id + '-picker',
                 tagName: 'div',
@@ -2361,9 +2948,7 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
                     this.encoding.set({
                         fetchId: this.model.id
                     });
-                    this.encoding.fetch({
-                        dataType: 'jsonp'
-                    });
+                    this.encoding.fetch();
                 }
                 this.model.on('change:id', _.bind(function() {
                     // Only fetch encoding if identifier is set
@@ -2372,7 +2957,6 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
                             fetchId: this.model.id
                         });
                         this.encoding.fetch({
-                            dataType: 'jsonp',
                             success: _.bind(function(response) {
                                 this.model.set({
                                     width: this.encoding.getWidth(),
@@ -2408,9 +2992,27 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
                     this.renderActions();
                 }
             }, this));
-            this.appEvents.on('showPicker', function(id) {
-                if (this.id === id) {
-                    this.$('.action-choose').trigger('click');
+            this.appEvents.on('showPicker', function(fieldId) {
+                if (this.id === fieldId) {
+                    this.$('.action-choose').hide();
+                    this.showChoose = false;
+                    // We only want one picker showing at a time so notify all fields to hide them (unless it's ours)
+                    if (this.config.hidePickers) {
+                        this.appEvents.trigger('hidePickers', this.id);
+                    }
+                }
+            }, this);
+            this.appEvents.on('hidePicker', function(fieldId) {
+                if (this.id === fieldId) {
+                    this.$('.action-choose').show();
+                    this.showChoose = true;
+                }
+            }, this);
+            this.appEvents.on('hidePickers', function(fieldId) {
+                // When the picker for our field is hidden we need need to show our 'Choose' button
+                if (!fieldId || (this.id !== fieldId)) {
+                    this.$('.action-choose').show();
+                    this.showChoose = true;
                 }
             }, this);
         },
@@ -2421,11 +3023,7 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
             'click .action-remove': 'removeHandler'
         },
         chooseHandler: function(e) {
-            // We only want one picker showing at a time so notify all fields to hide them (unless it's ours)
-            this.appEvents.trigger('hidePickers', this);
-            if (this.picker.$el.is(':hidden')) {
-                this.picker.showPicker();
-            }
+            this.appEvents.trigger('showPicker', this.id);
             e.preventDefault();
         },
         optionsHandler: function(e) {
@@ -2488,12 +3086,432 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
                 name: name,
                 thumbnailUrl: thumbnailUrl
             }));
+            // If our picker is shown, hide our 'Choose' button
+            if (!this.showChoose) {
+                this.$('.action-choose').hide();
+            }
         }
     });
 
 });
 
-define('ev-script',['require','backbone','underscore','jquery','ev-script/models/video-settings','ev-script/models/playlist-settings','ev-script/views/field','ev-script/views/video-embed','ev-script/views/playlist-embed','ev-script/util/events','ev-script/util/cache'],function(require) {
+define('ev-script/models/app-info',['require','underscore','ev-script/models/base'],function(require) {
+
+    
+
+    var _ = require('underscore'),
+        BaseModel = require('ev-script/models/base');
+
+    return BaseModel.extend({
+        initialize: function(attributes, options) {
+            BaseModel.prototype.initialize.call(this, attributes, options);
+            this.requiresAuth = false;
+        },
+        url: function() {
+            var url = this.config.ensembleUrl + '/api/Info';
+            return this.config.urlCallback ? this.config.urlCallback(url) : url;
+        },
+        parse: function(response) {
+            return response;
+        }
+    });
+
+});
+
+define('ev-script/models/current-user',['require','underscore','ev-script/models/base'],function(require) {
+
+    
+
+    var _ = require('underscore'),
+        BaseModel = require('ev-script/models/base');
+
+    return BaseModel.extend({
+        idAttribute: 'ID',
+        initialize: function(attributes, options) {
+            BaseModel.prototype.initialize.call(this, attributes, options);
+            // The API actually does require authentication...but we don't want
+            // special handling
+            this.requiresAuth = false;
+        },
+        url: function() {
+            var url = this.config.ensembleUrl + '/api/CurrentUser';
+            return this.config.urlCallback ? this.config.urlCallback(url) : url;
+        },
+        parse: function(response) {
+            return response.Data[0];
+        }
+    });
+
+});
+
+define('ev-script/auth/base/auth',['require','underscore','backbone','ev-script/util/events','ev-script/util/cache','ev-script/models/current-user'],function(require) {
+
+    
+
+    var _ = require('underscore'),
+        Backbone = require('backbone'),
+        eventsUtil = require('ev-script/util/events'),
+        cacheUtil = require('ev-script/util/cache'),
+        CurrentUser = require('ev-script/models/current-user'),
+        BaseAuth = function(appId) {
+            _.bindAll(this, 'getUser', 'login', 'logout', 'isAuthenticated', 'handleUnauthorized');
+            this.appId = appId;
+            this.config = cacheUtil.getAppConfig(appId);
+            this.info = cacheUtil.getAppInfo(appId);
+            this.globalEvents = eventsUtil.getEvents('global');
+            this.appEvents = eventsUtil.getEvents(appId);
+            this.user = null;
+            this.appEvents.on('appLoaded', function() {
+                this.fetchUser();
+            }, this);
+        };
+
+    // Reusing Backbone's object model for extension
+    BaseAuth.extend = Backbone.Model.extend;
+
+    _.extend(BaseAuth.prototype, {
+        fetchUser: function() {
+            var currentUser = new CurrentUser({}, {
+                appId: this.appId
+            });
+            return currentUser.fetch({
+                success: _.bind(function(model, response, options) {
+                    this.user = model;
+                    this.globalEvents.trigger('loggedIn', this.config.ensembleUrl);
+                }, this),
+                error: _.bind(function(model, response, options) {
+                    this.user = null;
+                    this.globalEvents.trigger('loggedOut', this.config.ensembleUrl);
+                }, this)
+            }).promise();
+        },
+        getUser: function() {
+            return this.user;
+        },
+        login: function(loginInfo) {},
+        logout: function() {},
+        isAuthenticated: function() {
+            return this.user != null;
+        },
+        handleUnauthorized: function(element, authCallback) {}
+    });
+
+    return BaseAuth;
+
+});
+
+define('text!ev-script/auth/basic/template.html',[],function () { return '<div class="logo"></div>\n<form>\n    <fieldset>\n        <div class="fieldWrap">\n            <label for="username">Username</label>\n            <input id="username" name="username" class="form-text"type="text"/>\n        </div>\n        <div class="fieldWrap">\n            <label for="password">Password</label>\n            <input id="password" name="password" class="form-text"type="password"/>\n        </div>\n        <div class="form-actions">\n            <label></label>\n            <input type="submit" class="form-submit action-submit" value="Submit"/>\n        </div>\n    </fieldset>\n</form>\n';});
+
+/*global window*/
+define('ev-script/auth/basic/view',['require','exports','module','jquery','underscore','backbone','ev-script/util/cache','ev-script/util/events','jquery.cookie','jquery-ui','text!ev-script/auth/basic/template.html'],function(require, template) {
+
+    
+
+    var $ = require('jquery'),
+        _ = require('underscore'),
+        Backbone = require('backbone'),
+        cacheUtil = require('ev-script/util/cache'),
+        eventsUtil = require('ev-script/util/events');
+
+    require('jquery.cookie');
+    require('jquery-ui');
+
+    return Backbone.View.extend({
+        template: _.template(require('text!ev-script/auth/basic/template.html')),
+        initialize: function(options) {
+            this.appId = options.appId;
+            this.config = cacheUtil.getAppConfig(this.appId);
+            this.appEvents = eventsUtil.getEvents(this.appId);
+            this.submitCallback = options.submitCallback || function() {};
+            this.auth = options.auth;
+        },
+        render: function() {
+            var html = this.template();
+            this.$dialog = $('<div class="ev-auth"></div>');
+            this.$el.after(this.$dialog);
+            this.$dialog.dialog({
+                title: 'Ensemble Video Login - ' + this.config.ensembleUrl,
+                modal: true,
+                draggable: false,
+                resizable: false,
+                width: Math.min(540, $(window).width() - this.config.dialogMargin),
+                height: Math.min(250, $(window).height() - this.config.dialogMargin),
+                dialogClass: 'ev-dialog',
+                create: _.bind(function(event, ui) {
+                    this.$dialog.html(html);
+                }, this),
+                close: _.bind(function(event, ui) {
+                    this.$dialog.dialog('destroy').remove();
+                    this.appEvents.trigger('hidePickers');
+                }, this)
+            });
+            $('form', this.$dialog).submit(_.bind(function(e) {
+                var $form = $(e.target);
+                var username = $('#username', $form).val();
+                var password = $('#password', $form).val();
+                if (username && password) {
+                    this.auth.login({
+                        username: username,
+                        password: password
+                    })
+                    .always(this.submitCallback);
+                    this.$dialog.dialog('destroy').remove();
+                }
+                e.preventDefault();
+            }, this));
+        }
+    });
+
+});
+
+define('ev-script/auth/basic/auth',['require','jquery','underscore','backbone','ev-script/auth/base/auth','ev-script/auth/basic/view','ev-script/collections/organizations'],function(require) {
+
+    
+
+    var $ = require('jquery'),
+        _ = require('underscore'),
+        Backbone = require('backbone'),
+        BaseAuth = require('ev-script/auth/base/auth'),
+        AuthView = require('ev-script/auth/basic/view'),
+        Organizations = require('ev-script/collections/organizations'),
+        // Note: This isn't really basic authentication at all...we just set
+        // cookies containing credentials to be handled by a proxy.  The proxy
+        // uses these to forward our request with a basic auth header.
+        BasicAuth = BaseAuth.extend({
+            constructor: function(appId) {
+                BasicAuth.__super__.constructor.call(this, appId);
+            },
+            fetchUser: function() {
+                // Hack to handle legacy (pre-3.6) API which doesn't have a
+                // currentUser endpoint.  See if we can successfully query orgs
+                // instead (probably least expensive due to minimal data) to see
+                // if valid credentials are set, then use a randomly generated
+                // user id
+                if (this.info.get('ApplicationVersion')) {
+                    return BasicAuth.__super__.fetchUser.call(this);
+                } else {
+                    var orgs = new Organizations({}, {
+                        appId: this.appId
+                    });
+                    // Don't want special treatment of failure due to
+                    // authentication in this case
+                    orgs.requiresAuth = false;
+                    return orgs.fetch({
+                        success: _.bind(function(collection, response, options) {
+                            this.user = new Backbone.Model({
+                                id: Math.floor(Math.random() * 10000000000000001).toString(16)
+                            });
+                            this.globalEvents.trigger('loggedIn', this.config.ensembleUrl);
+                        }, this),
+                        error: _.bind(function(collection, xhr, options) {
+                            this.user = null;
+                            this.globalEvents.trigger('loggedOut', this.config.ensembleUrl);
+                        }, this)
+                    }).promise();
+                }
+            },
+            login: function(loginInfo) {
+                var cookieOptions = { path: this.config.authPath };
+                $.cookie(this.config.ensembleUrl + '-user', loginInfo.username, _.extend({}, cookieOptions));
+                $.cookie(this.config.ensembleUrl + '-pass', loginInfo.password, _.extend({}, cookieOptions));
+                return this.fetchUser();
+            },
+            logout: function() {
+                var deferred = $.Deferred();
+                var cookieOptions = { path: this.config.authPath };
+                $.cookie(this.config.ensembleUrl + '-user', null, _.extend({}, cookieOptions));
+                $.cookie(this.config.ensembleUrl + '-pass', null, _.extend({}, cookieOptions));
+                this.user = null;
+                this.globalEvents.trigger('loggedOut', this.config.ensembleUrl);
+                deferred.resolve();
+                return deferred.promise();
+            },
+            handleUnauthorized: function(element, authCallback) {
+                this.logout();
+                var authView = new AuthView({
+                    el: element,
+                    submitCallback: authCallback,
+                    appId: this.appId,
+                    auth: this
+                });
+                authView.render();
+            }
+        });
+
+    return BasicAuth;
+});
+
+define('text!ev-script/auth/forms/template.html',[],function () { return '<div class="logo"></div>\n<form>\n    <fieldset>\n        <div class="fieldWrap">\n            <label for="username">Username</label>\n            <input id="username" name="username" class="form-text" type="text"/>\n        </div>\n        <div class="fieldWrap">\n            <label for="password">Password</label>\n            <input id="password" name="password" class="form-text" type="password"/>\n        </div>\n        <div class="fieldWrap">\n            <label for="domain">Domain</label>\n            <select id="domain" name="domain" class="form-select"></select>\n        </div>\n        <div class="fieldWrap">\n            <label for="remember">Remember Me</label>\n            <input id="remember" name="remember" type="checkbox"></input>\n        </div>\n        <div class="form-actions">\n            <label></label>\n            <input type="submit" class="form-submit action-submit" value="Submit"/>\n        </div>\n    </fieldset>\n</form>\n';});
+
+/*global window*/
+define('ev-script/auth/forms/view',['require','exports','module','jquery','underscore','backbone','ev-script/util/cache','ev-script/util/events','jquery.cookie','jquery-ui','text!ev-script/auth/forms/template.html','text!ev-script/templates/options.html'],function(require, template) {
+
+    
+
+    var $ = require('jquery'),
+        _ = require('underscore'),
+        Backbone = require('backbone'),
+        cacheUtil = require('ev-script/util/cache'),
+        eventsUtil = require('ev-script/util/events');
+
+    require('jquery.cookie');
+    require('jquery-ui');
+
+    return Backbone.View.extend({
+        template: _.template(require('text!ev-script/auth/forms/template.html')),
+        optionsTemplate: _.template(require('text!ev-script/templates/options.html')),
+        initialize: function(options) {
+            this.appId = options.appId;
+            this.config = cacheUtil.getAppConfig(this.appId);
+            this.appEvents = eventsUtil.getEvents(this.appId);
+            this.submitCallback = options.submitCallback || function() {};
+            this.auth = options.auth;
+        },
+        render: function() {
+            var $html = $(this.template());
+            var $select = $('#domain', $html).append(this.optionsTemplate({
+                collection: this.collection,
+                // FIXME - need to know the default to select here
+                selectedId: null
+            }));
+            this.$dialog = $('<div class="ev-auth"></div>');
+            this.$el.after(this.$dialog);
+            this.$dialog.dialog({
+                title: 'Ensemble Video Login - ' + this.config.ensembleUrl,
+                modal: true,
+                draggable: false,
+                resizable: false,
+                width: Math.min(540, $(window).width() - this.config.dialogMargin),
+                height: Math.min(250, $(window).height() - this.config.dialogMargin),
+                dialogClass: 'ev-dialog',
+                create: _.bind(function(event, ui) {
+                    this.$dialog.html($html);
+                }, this),
+                close: _.bind(function(event, ui) {
+                    this.$dialog.dialog('destroy').remove();
+                    this.appEvents.trigger('hidePickers');
+                }, this)
+            });
+            $('form', this.$dialog).submit(_.bind(function(e) {
+                var $form = $(e.target);
+                var username = $('#username', $form).val();
+                var password = $('#password', $form).val();
+                if (username && password) {
+                    this.auth.login({
+                        username: username,
+                        password: password,
+                        authSourceId: $('#domain :selected', $form).val(),
+                        persist: $('#remember', $form).is(':checked')
+                    }).then(_.bind(function() {
+                        this.$dialog.dialog('destroy').remove();
+                        this.submitCallback();
+                    }, this));
+                }
+                e.preventDefault();
+            }, this));
+        }
+    });
+
+});
+
+define('ev-script/collections/authsources',['require','ev-script/collections/base','ev-script/util/cache'],function(require) {
+
+    
+
+    var BaseCollection = require('ev-script/collections/base'),
+        cacheUtil = require('ev-script/util/cache'),
+        cached = new cacheUtil.Cache();
+
+    return BaseCollection.extend({
+        initialize: function(models, options) {
+            BaseCollection.prototype.initialize.call(this, models, options);
+            this.requiresAuth = false;
+        },
+        getCached: function(key) {
+            return cached.get(this.config.ensembleUrl);
+        },
+        setCached: function(key, resp) {
+            return cached.set(this.config.ensembleUrl, resp);
+        },
+        url: function() {
+            var api_url = this.config.ensembleUrl + '/api/AuthSources';
+            return this.config.urlCallback ? this.config.urlCallback(api_url) : api_url;
+        }
+    });
+
+});
+
+define('ev-script/auth/forms/auth',['require','jquery','underscore','ev-script/auth/base/auth','ev-script/models/current-user','ev-script/auth/forms/view','ev-script/collections/authsources'],function(require) {
+
+    
+
+    var $ = require('jquery'),
+        _ = require('underscore'),
+        BaseAuth = require('ev-script/auth/base/auth'),
+        CurrentUser = require('ev-script/models/current-user'),
+        AuthView = require('ev-script/auth/forms/view'),
+        AuthSources = require('ev-script/collections/authsources'),
+        FormsAuth = BaseAuth.extend({
+            constructor: function(appId) {
+                BaseAuth.prototype.constructor.call(this, appId);
+                this.authSources = new AuthSources({}, {
+                    appId: appId
+                });
+                this.asPromise = this.authSources.fetch();
+            },
+            login: function(loginInfo) {
+                var url = this.config.ensembleUrl + '/api/Login';
+                return $.ajax({
+                    url: this.config.urlCallback ? this.config.urlCallback(url) : url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: loginInfo,
+                    xhrFields: {
+                        withCredentials: true
+                    },
+                    success: _.bind(function(data, status, xhr) {
+                        this.user = new CurrentUser(data.Data[0], {
+                            appId: this.appId
+                        });
+                        this.globalEvents.trigger('loggedIn', this.config.ensembleUrl);
+                    }, this)
+                }).promise();
+            },
+            logout: function() {
+                var url = this.config.ensembleUrl + '/api/Logout';
+                return $.ajax({
+                    url: this.config.urlCallback ? this.config.urlCallback(url) : url,
+                    type: 'POST',
+                    xhrFields: {
+                        withCredentials: true
+                    },
+                    success: _.bind(function(data, status, xhr) {
+                        this.user = null;
+                        this.globalEvents.trigger('loggedOut', this.config.ensembleUrl);
+                    }, this)
+                }).promise();
+            },
+            handleUnauthorized: function(element, authCallback) {
+                this.user = null;
+                this.globalEvents.trigger('loggedOut', this.config.ensembleUrl);
+                this.asPromise.done(_.bind(function() {
+                    var authView = new AuthView({
+                        el: element,
+                        submitCallback: authCallback,
+                        appId: this.appId,
+                        auth: this,
+                        collection: this.authSources
+                    });
+                    authView.render();
+                }, this));
+            }
+        });
+
+    return FormsAuth;
+
+});
+
+define('ev-script',['require','backbone','underscore','jquery','ev-script/models/video-settings','ev-script/models/playlist-settings','ev-script/views/field','ev-script/views/video-embed','ev-script/views/playlist-embed','ev-script/models/app-info','ev-script/auth/basic/auth','ev-script/auth/forms/auth','ev-script/util/events','ev-script/util/cache'],function(require) {
 
     
 
@@ -2505,6 +3523,9 @@ define('ev-script',['require','backbone','underscore','jquery','ev-script/models
         FieldView = require('ev-script/views/field'),
         VideoEmbedView = require('ev-script/views/video-embed'),
         PlaylistEmbedView = require('ev-script/views/playlist-embed'),
+        AppInfo = require('ev-script/models/app-info'),
+        BasicAuth = require('ev-script/auth/basic/auth'),
+        FormsAuth = require('ev-script/auth/forms/auth'),
         eventsUtil = require('ev-script/util/events'),
         cacheUtil = require('ev-script/util/cache');
 
@@ -2513,27 +3534,43 @@ define('ev-script',['require','backbone','underscore','jquery','ev-script/models
         // Lame unique id generator
         var appId = Math.floor(Math.random() * 10000000000000001).toString(16);
 
-        appOptions = appOptions || {};
-
-        // Get or create a new cache to store objects specific to EV installation
-        // but common across 'app' instances (e.g. videos accessible by a given user)
+        // Get or create a new cache to store objects specific to EV
+        // installation but common across 'app' instances (e.g. videos
+        // accessible by a given user).
         var evCache = cacheUtil.caches.get(appOptions.ensembleUrl);
         if (!evCache) {
             evCache = cacheUtil.caches.set(appOptions.ensembleUrl, new cacheUtil.Cache());
         }
 
-        // Add our configuration to the app cache...this is specific to this 'app'
-        // instance.  There may be multiple instances on a single page w/ unique
-        // settings.
-        cacheUtil.setAppConfig(appId, {
-            authId: appOptions.authId || 'ensemble',
-            ensembleUrl: appOptions.ensembleUrl || '',
-            authPath: appOptions.authPath || '',
-            authDomain: appOptions.authDomain || '',
-            urlCallback: appOptions.urlCallback || function(url) { return url; },
-            pageSize: parseInt(appOptions.pageSize || 100, 10),
-            scrollHeight: appOptions.scrollHeight || 600
-        });
+        var defaults = {
+            // Application root of the EV installation.
+            ensembleUrl: '',
+            // Cookie path.
+            authPath: '',
+            // Models/collections will typically fetch directly from the API,
+            // but this method is called in case that needs to be overridden
+            // (e.g. in cross-domain scenarios where we're using a proxy).
+            urlCallback: function(url) { return url; },
+            // Number of results to fetch at a time from the server (page size).
+            pageSize: 100,
+            // The height of our scroll loader.
+            scrollHeight: 600,
+            // In scenarios where we have multiple fields on a page we want to
+            // automatically hide inactive pickers to preserve screen real
+            // estate.  Set to false to disable.
+            hidePickers: true,
+            // The difference between window dimensions and maximum dialog size.
+            dialogMargin: 40,
+            // This can be 'forms' or 'basic' (default)
+            // authType: 'forms'
+            // Location for plupload flash runtime
+            pluploadFlashPath: ''
+        };
+
+        // Add our configuration to the app cache...this is specific to this
+        // 'app' instance.  There may be multiple instances on a single page w/
+        // unique settings.
+        var config = cacheUtil.setAppConfig(appId, _.extend({}, defaults, appOptions));
 
         // Create an event aggregator specific to our app
         eventsUtil.initEvents(appId);
@@ -2542,33 +3579,60 @@ define('ev-script',['require','backbone','underscore','jquery','ev-script/models
         // that span app instances
         this.globalEvents = eventsUtil.getEvents();
 
-        this.handleField = function(fieldWrap, settingsModel, fieldSelector) {
-            var $field = $(fieldSelector, fieldWrap);
-            var fieldView = new FieldView({
-                id: fieldWrap.id || appId,
-                el: fieldWrap,
-                model: settingsModel,
-                $field: $field,
-                appId: appId
-            });
-        };
+        // Features depend on info asynchronously retreived below...so leverage
+        // promises to coordinate loading
+        var loading = $.Deferred();
+        _.extend(this, loading.promise());
 
-        this.handleEmbed = function(embedWrap, settingsModel) {
-            if (settingsModel instanceof VideoSettings) {
-                var videoEmbed = new VideoEmbedView({
-                    el: embedWrap,
-                    model: settingsModel,
-                    appId: appId
-                });
+        var info = new AppInfo({}, {
+            appId: appId
+        });
+        cacheUtil.setAppInfo(appId, info);
+        info.fetch({})
+        .always(_.bind(function() {
+            // This is kinda lazy...but this will only be set in 3.6+ versions
+            // so we don't actually need to check the version number
+            if (!info.get('ApplicationVersion') && config.authType === 'forms') {
+                loading.reject('Configured to use forms authentication against a pre-3.6 API.');
             } else {
-                var playlistEmbed = new PlaylistEmbedView({
-                    el: embedWrap,
-                    model: settingsModel,
-                    appId: appId
-                });
-            }
-        };
+                // This will initialize and cache an auth object for our app
+                var auth = (config.authType && config.authType === 'forms') ? new FormsAuth(appId) : new BasicAuth(appId);
+                cacheUtil.setAppAuth(appId, auth);
 
+                // TODO - document and add some flexibility to params (e.g. in addition
+                // to selector allow element or object).
+                this.handleField = function(fieldWrap, settingsModel, fieldSelector) {
+                    var $field = $(fieldSelector, fieldWrap);
+                    var fieldView = new FieldView({
+                        id: fieldWrap.id || appId,
+                        el: fieldWrap,
+                        model: settingsModel,
+                        $field: $field,
+                        appId: appId
+                    });
+                };
+
+                // TODO - document.  See handleField comment too.
+                this.handleEmbed = function(embedWrap, settingsModel) {
+                    if (settingsModel instanceof VideoSettings) {
+                        var videoEmbed = new VideoEmbedView({
+                            el: embedWrap,
+                            model: settingsModel,
+                            appId: appId
+                        });
+                    } else {
+                        var playlistEmbed = new PlaylistEmbedView({
+                            el: embedWrap,
+                            model: settingsModel,
+                            appId: appId
+                        });
+                    }
+                };
+
+                this.appEvents.trigger('appLoaded');
+                loading.resolve();
+            }
+        }, this));
     };
 
     return {
@@ -2591,6 +3655,8 @@ define('ev-script',['require','backbone','underscore','jquery','ev-script/models
     });
     define('jquery-ui', ['jquery'], function() {});
     define('jquery.cookie', ['jquery'], function() {});
+    define('plupload', function() {});
+    define('jquery.plupload.queue', ['jquery', 'plupload'], function() {});
 
     // Use almond's special top-level, synchronous require to trigger factory
     // functions, get the final module value, and export it as the public

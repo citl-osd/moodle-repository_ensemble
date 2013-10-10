@@ -15,7 +15,7 @@ div.ev-field div.logo {
     display: none;
 }
 
-div.ev-hider {
+div.ev-hider a.action-hide {
     display: none;
 }
 
@@ -61,4 +61,8 @@ div.ev-dialog div.ui-dialog-titlebar {
 
 .submit {
     display: inline;
+}
+
+div.ev-field-actions .action-remove {
+  display: none;
 }

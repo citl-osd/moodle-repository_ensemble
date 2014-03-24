@@ -1,8 +1,8 @@
 /**
- * ev-script 0.3.0 2013-10-09
+ * ev-script 0.3.0 2014-03-03
  * Ensemble Video Integration Library
  * https://github.com/jmpease/ev-script
- * Copyright (c) 2013 Symphony Video, Inc.
+ * Copyright (c) 2014 Symphony Video, Inc.
  * Licensed MIT, GPL-2.0
  */
 (function (root, factory) {
@@ -1113,7 +1113,7 @@ define('ev-script/views/picker',['require','jquery','underscore','ev-script/view
 
 });
 
-define('text!ev-script/templates/search.html',[],function () { return '<form>\n    <label for="<%= id %>">Search:</label>\n    <input id="<%= id %>" type="text" class="form-text search" value="<%- searchVal %>" title="Search Videos" />\n    <input type="submit" value="Go" class="form-submit" />\n</form>\n';});
+define('text!ev-script/templates/search.html',[],function () { return '<form>\n    <label for="<%= id %>">Search:</label>\n    <input id="<%= id %>" type="text" class="form-text search" value="<%- searchVal %>" title="Search Media" />\n    <input type="submit" value="Go" class="form-submit" />\n</form>\n';});
 
 define('ev-script/views/search',['require','underscore','ev-script/views/base','text!ev-script/templates/search.html'],function(require) {
 
@@ -2298,9 +2298,13 @@ define('ev-script/views/upload',['require','jquery','underscore','ev-script/view
                         _.each(files, function(file) {
                             var parts = file.name.split('.'),
                                 extension = parts[parts.length - 1];
-                            if (!_.contains(validExtensions, extension)) {
+                            if (!_.contains(validExtensions, extension.toLowerCase())) {
                                 up.removeFile(file);
-                                // TODO - error message?
+                                up.trigger('Error', {
+                                    code : plupload.FILE_EXTENSION_ERROR,
+                                    message : plupload.translate('File extension error.'),
+                                    file : file
+                                });
                             }
                         });
                         // Keep the last file in the queue
@@ -2337,7 +2341,7 @@ define('ev-script/views/upload',['require','jquery','underscore','ev-script/view
                 $dialog;
             this.$anchor.after($dialogWrap);
             this.$dialog = $dialogWrap.dialog({
-                title: 'Upload Video to Ensemble',
+                title: 'Upload Media to Ensemble',
                 modal: true,
                 width: this.getWidth(),
                 height: this.getHeight(),
@@ -2382,7 +2386,7 @@ define('ev-script/views/video-picker',['require','jquery','underscore','ev-scrip
                 this.loadVideos();
             }, this);
             if (this.info.get('ApplicationVersion')) {
-                this.$upload = $('<div class="ev-field-actions"><a href="#" class="action-upload" title="Upload Video"><span>Upload Video<span></a></div>').css('display', 'none');
+                this.$upload = $('<div class="ev-field-actions"><div class="action-upload"><div class="upload-icon"></div><a href="#" class="upload-link" title="Upload"><span>Upload<span></a></div></div>').css('display', 'none');
                 this.$('div.ev-filter-block').prepend(this.$upload);
             }
             this.searchView = new SearchView({
@@ -2893,7 +2897,7 @@ define('ev-script/views/playlist-settings',['require','underscore','ev-script/vi
 
 });
 
-define('text!ev-script/templates/field.html',[],function () { return '<div class="logo">\n    <a target="_blank" href="<%= ensembleUrl %>"><span>Ensemble Logo</span></a>\n</div>\n<% if (modelId) { %>\n    <% if (thumbnailUrl) { %>\n        <div class="thumbnail">\n            <img alt="Video thumbnail" src="<%= thumbnailUrl %>"/>\n        </div>\n    <% } %>\n    <div class="title"><%- name %></div>\n    <div class="ev-field-actions">\n        <a href="#" class="action-choose" title="Change <%= label %>"><span>Change <%= label %><span></a>\n        <a href="#" class="action-preview" title="Preview: <%- name %>"><span>Preview: <%- name %><span></a>\n        <!-- TODO - temporarily disabled playlist settings until it is implemented -->\n        <% if (type === \'video\') { %>\n            <a href="#" class="action-options" title="<%= label %> Embed Options"><span><%= label %> Embed Options<span></a>\n        <% } %>\n        <a href="#" class="action-remove" title="Remove <%= label %>"><span>Remove <%= label %><span></a>\n    </div>\n<% } else { %>\n    <div class="title"><em>Add <%= type %>.</em></div>\n    <div class="ev-field-actions">\n        <a href="#" class="action-choose" title="Choose <%= label %>"><span>Choose <%= label %><span></a>\n    </div>\n<% } %>\n';});
+define('text!ev-script/templates/field.html',[],function () { return '<div class="logo">\n    <a target="_blank" href="<%= ensembleUrl %>"><span>Ensemble Logo</span></a>\n</div>\n<% if (modelId) { %>\n    <% if (thumbnailUrl) { %>\n        <div class="thumbnail">\n            <img alt="Media thumbnail" src="<%= thumbnailUrl %>"/>\n        </div>\n    <% } %>\n    <div class="title"><%- name %></div>\n    <div class="ev-field-actions">\n        <a href="#" class="action-choose" title="Change <%= label %>"><span>Change <%= label %><span></a>\n        <a href="#" class="action-preview" title="Preview: <%- name %>"><span>Preview: <%- name %><span></a>\n        <!-- TODO - temporarily disabled playlist settings until it is implemented -->\n        <% if (type === \'video\') { %>\n            <a href="#" class="action-options" title="<%= label %> Embed Options"><span><%= label %> Embed Options<span></a>\n        <% } %>\n        <a href="#" class="action-remove" title="Remove <%= label %>"><span>Remove <%= label %><span></a>\n    </div>\n<% } else { %>\n    <div class="title"><em>Add <%= label %></em></div>\n    <div class="ev-field-actions">\n        <a href="#" class="action-choose" title="Choose <%= label %>"><span>Choose <%= label %><span></a>\n    </div>\n<% } %>\n';});
 
 define('ev-script/views/field',['require','jquery','underscore','ev-script/views/base','ev-script/models/video-settings','ev-script/models/playlist-settings','ev-script/views/video-picker','ev-script/views/video-settings','ev-script/views/video-preview','ev-script/models/video-encoding','ev-script/views/playlist-picker','ev-script/views/playlist-settings','ev-script/views/playlist-preview','text!ev-script/templates/field.html'],function(require) {
 
@@ -3055,7 +3059,7 @@ define('ev-script/views/field',['require','jquery','underscore','ev-script/views
         renderActions: function() {
             var ensembleUrl = this.config.ensembleUrl, name, label, type, thumbnailUrl;
             if (this.model instanceof VideoSettings) {
-                label = 'Video';
+                label = 'Media';
                 type = 'video';
             } else {
                 label = 'Playlist';
@@ -3414,7 +3418,7 @@ define('ev-script/auth/forms/view',['require','exports','module','jquery','under
 
 });
 
-define('ev-script/collections/authsources',['require','ev-script/collections/base','ev-script/util/cache'],function(require) {
+define('ev-script/collections/identity-providers',['require','ev-script/collections/base','ev-script/util/cache'],function(require) {
 
     
 
@@ -3434,14 +3438,14 @@ define('ev-script/collections/authsources',['require','ev-script/collections/bas
             return cached.set(this.config.ensembleUrl, resp);
         },
         url: function() {
-            var api_url = this.config.ensembleUrl + '/api/AuthSources';
+            var api_url = this.config.ensembleUrl + '/api/IdentityProviders';
             return this.config.urlCallback ? this.config.urlCallback(api_url) : api_url;
         }
     });
 
 });
 
-define('ev-script/auth/forms/auth',['require','jquery','underscore','ev-script/auth/base/auth','ev-script/models/current-user','ev-script/auth/forms/view','ev-script/collections/authsources'],function(require) {
+define('ev-script/auth/forms/auth',['require','jquery','underscore','ev-script/auth/base/auth','ev-script/models/current-user','ev-script/auth/forms/view','ev-script/collections/identity-providers'],function(require) {
 
     
 
@@ -3450,14 +3454,14 @@ define('ev-script/auth/forms/auth',['require','jquery','underscore','ev-script/a
         BaseAuth = require('ev-script/auth/base/auth'),
         CurrentUser = require('ev-script/models/current-user'),
         AuthView = require('ev-script/auth/forms/view'),
-        AuthSources = require('ev-script/collections/authsources'),
+        IdentityProviders = require('ev-script/collections/identity-providers'),
         FormsAuth = BaseAuth.extend({
             constructor: function(appId) {
                 BaseAuth.prototype.constructor.call(this, appId);
-                this.authSources = new AuthSources({}, {
+                this.identityProviders = new IdentityProviders({}, {
                     appId: appId
                 });
-                this.asPromise = this.authSources.fetch();
+                this.asPromise = this.identityProviders.fetch();
             },
             login: function(loginInfo) {
                 var url = this.config.ensembleUrl + '/api/Login';
@@ -3465,7 +3469,12 @@ define('ev-script/auth/forms/auth',['require','jquery','underscore','ev-script/a
                     url: this.config.urlCallback ? this.config.urlCallback(url) : url,
                     type: 'POST',
                     dataType: 'json',
-                    data: loginInfo,
+                    data: {
+                        user: loginInfo.username,
+                        password: loginInfo.password,
+                        identityProviderId: loginInfo.authSourceId,
+                        persist: loginInfo.persist
+                    },
                     xhrFields: {
                         withCredentials: true
                     },
@@ -3500,7 +3509,7 @@ define('ev-script/auth/forms/auth',['require','jquery','underscore','ev-script/a
                         submitCallback: authCallback,
                         appId: this.appId,
                         auth: this,
-                        collection: this.authSources
+                        collection: this.identityProviders
                     });
                     authView.render();
                 }, this));

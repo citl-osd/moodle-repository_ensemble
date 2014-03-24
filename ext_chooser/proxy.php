@@ -40,16 +40,15 @@ $authDomain     = get_config('ensemble', 'authDomain');
 $username       = '';
 $password       = '';
 $filter         = true;
+$cookie_prefix  = str_replace('.', '_', $ensembleUrl);
 
 if (!empty($serviceUser)) {
   $username = $serviceUser;
   $password = $servicePass;
   $filter = true;
-} else if (!empty($_COOKIE['ev-moodle-user'])) {
-  $username = $_COOKIE['ev-moodle-user'];
-  $password = $_COOKIE['ev-moodle-pass'];
-  // Ignore configured auth domain (it should only be used with a service account)
-  $authDomain = '';
+} else if (!empty($_COOKIE[$cookie_prefix . '-user'])) {
+  $username = $_COOKIE[$cookie_prefix . '-user'];
+  $password = $_COOKIE[$cookie_prefix . '-pass'];
   $filter = false;
 }
 
@@ -61,8 +60,7 @@ if (preg_match('#^' . preg_quote($ensembleUrl) . '#i', $api_url) !== 1) {
 }
 
 $client = new Zend_Http_Client($api_url);
-// Construct basic auth header for configured service account
-$client->setHeaders('Authorization', 'Basic ' . base64_encode($username . (!empty($authDomain) ? '@' . $authDomain : '') . ':' . $password));
+$client->setHeaders('Authorization', 'Basic ' . base64_encode($username . ':' . $password));
 
 // Append user filter for currently logged in Moodle user (if we're using a service account)
 if ($filter) {

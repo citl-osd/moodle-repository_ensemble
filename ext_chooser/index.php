@@ -41,8 +41,9 @@ $path = ($path === '/' ? '' : $path);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ensemble Video External File Chooser</title>
     <link rel="stylesheet" href="css/jquery-ui/jquery-ui.min.css?v=1.8.3">
-    <link rel="stylesheet" href="css/ev-script.css?v=20130409">
-    <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="stylesheet" href="css/plupload/jquery.plupload.queue/css/jquery.plupload.queue.css?v=1.5.7">
+    <link rel="stylesheet" href="css/ev-script.css?v=20140303">
+    <link rel="stylesheet" href="css/style.css?v=3">
   </head>
   <body>
     <form>
@@ -56,7 +57,11 @@ $path = ($path === '/' ? '' : $path);
     <script src="js/jquery.cookie/jquery.cookie.js?v=1.3.1"></script>
     <script src="js/lodash/lodash.underscore.min.js?v=1.1.1"></script>
     <script src="js/backbone/backbone-min.js?v=1.0.0"></script>
-    <script src="js/ev-script/ev-script.min.js?v=20130418"></script>
+    <script src="js/plupload/plupload.js?v=1.5.7"></script>
+    <script src="js/plupload/plupload.html5.js?v=1.5.7"></script>
+    <script src="js/plupload/plupload.flash.js?v=1.5.7"></script>
+    <script src="js/plupload/jquery.plupload.queue/jquery.plupload.queue.js?v=1.5.7"></script>
+    <script src="js/ev-script/ev-script.js?v=20140303"></script>
     <script type="text/javascript">
         (function($) {
 
@@ -68,7 +73,6 @@ $path = ($path === '/' ? '' : $path);
                 type = '<?php echo $evtype ?>',
                 app = new EV.EnsembleApp({
                     ensembleUrl: ensembleUrl,
-                    authId: 'ev-moodle',
                     authPath: '<?php echo $path . "/repository/ensemble/" ?>',
                     pageSize: 100,
                     scrollHeight: 300,
@@ -126,22 +130,30 @@ $path = ($path === '/' ? '' : $path);
 
             $submit.click(submitHandler);
 
-            app.appEvents.bind('fieldUpdated', function($field, value) {
-                if (value) {
-                    $submit.show();
-                } else {
-                    $submit.hide();
-                }
-            });
-
             $(document).ready(function() {
                 var $wrap = $('#content').parent();
-                if (type === 'video') {
-                    app.handleField($wrap[0], new EV.VideoSettings(), '#content');
-                } else if (type === 'playlist') {
-                    app.handleField($wrap[0], new EV.PlaylistSettings(), '#content');
-                }
-                app.appEvents.trigger('showPicker', $wrap.attr('id'));
+                app.done(function() {
+                    if (type === 'video') {
+                        app.handleField($wrap[0], new EV.VideoSettings(), '#content');
+                    } else if (type === 'playlist') {
+                        app.handleField($wrap[0], new EV.PlaylistSettings(), '#content');
+                    }
+                    app.appEvents.trigger('showPicker', $wrap.attr('id'));
+                    // Since I've hidden the remove button to simplify the
+                    // interface, opening the chooser to change the
+                    // currently selected video will trigger a remove click
+                    app.appEvents.bind('showPicker', function() {
+                        $('.action-remove', $wrap).click();
+                    });
+                    app.appEvents.bind('fieldUpdated', function($field, value) {
+                        if (value) {
+                            // Give our chooser time to hide
+                            $submit.fadeIn(800);
+                        } else {
+                            $submit.hide();
+                        }
+                    });
+                });
             });
 
         }(jQuery));

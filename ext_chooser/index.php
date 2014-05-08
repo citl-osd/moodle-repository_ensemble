@@ -163,7 +163,7 @@ $path           = ($path === '/' ? '' : $path);
         }(jQuery));
     </script>
     <?php
-        if(debugging()) {
+        if (debugging()) {
             echo 'Username: ' . $USER->username . '<br/>';
             echo 'ServiceUser: ' . $serviceUser . '<br/>';
             echo 'AuthDomain: ' . $authDomain . '<br/>';

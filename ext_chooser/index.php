@@ -26,11 +26,14 @@
 
 require_once(dirname(dirname(dirname(dirname(__FILE__)))) . '/config.php');
 
-$evtype = required_param('type', PARAM_TEXT);
-$ensembleUrl = get_config('ensemble', 'ensembleURL');
-$wwwroot = $CFG->wwwroot;
-$path = parse_url($wwwroot, PHP_URL_PATH);
-$path = ($path === '/' ? '' : $path);
+$evtype         = required_param('type', PARAM_TEXT);
+$ensembleUrl    = get_config('ensemble', 'ensembleURL');
+$serviceUser    = get_config('ensemble', 'serviceUser');
+$authDomain     = get_config('ensemble', 'authDomain');
+$authType       = (!empty($serviceUser) ? 'none' : 'basic');
+$wwwroot        = $CFG->wwwroot;
+$path           = parse_url($wwwroot, PHP_URL_PATH);
+$path           = ($path === '/' ? '' : $path);
 
 ?>
 <!doctype html>
@@ -42,7 +45,7 @@ $path = ($path === '/' ? '' : $path);
     <title>Ensemble Video External File Chooser</title>
     <link rel="stylesheet" href="css/jquery-ui/jquery-ui.min.css?v=1.8.3">
     <link rel="stylesheet" href="css/plupload/jquery.plupload.queue/css/jquery.plupload.queue.css?v=1.5.7">
-    <link rel="stylesheet" href="css/ev-script.css?v=20140303">
+    <link rel="stylesheet" href="css/ev-script.css?v=20140507">
     <link rel="stylesheet" href="css/style.css?v=3">
   </head>
   <body>
@@ -61,7 +64,7 @@ $path = ($path === '/' ? '' : $path);
     <script src="js/plupload/plupload.html5.js?v=1.5.7"></script>
     <script src="js/plupload/plupload.flash.js?v=1.5.7"></script>
     <script src="js/plupload/jquery.plupload.queue/jquery.plupload.queue.js?v=1.5.7"></script>
-    <script src="js/ev-script/ev-script.js?v=20140303"></script>
+    <script src="js/ev-script/ev-script.min.js?v=20140507"></script>
     <script type="text/javascript">
         (function($) {
 
@@ -79,7 +82,8 @@ $path = ($path === '/' ? '' : $path);
                     proxyPath: proxyPath,
                     urlCallback: function(url) {
                         return proxyPath + '?request=' + encodeURIComponent(url);
-                    }
+                    },
+                    authType: '<?php echo $authType ?>'
                 }),
                 $form = $('form'),
                 $content = $('#content'),
@@ -158,5 +162,12 @@ $path = ($path === '/' ? '' : $path);
 
         }(jQuery));
     </script>
+    <?php
+        if(debugging()) {
+            echo 'Username: ' . $USER->username . '<br/>';
+            echo 'ServiceUser: ' . $serviceUser . '<br/>';
+            echo 'AuthDomain: ' . $authDomain . '<br/>';
+        }
+    ?>
   </body>
 </html>

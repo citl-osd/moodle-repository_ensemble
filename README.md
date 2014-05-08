@@ -10,7 +10,7 @@ __[Plugin Setup](#setup)__<br/>
 
 ### <a id="overview"></a>Overview
 
-Along with the [Ensemble Video Moodle Filter Plugin](https://github.com/jmpease/moodle-filter_ensemble),
+Along with the [Ensemble Video Moodle Filter Plugin](https://github.com/ensembleVideo/moodle-filter_ensemble),
 this plugin makes it easier for Moodle users to add videos and playlists to
 content without having to navigate to Ensemble Video and copy/paste complicated
 embed codes.  Once setup, you should see two additional repositories under
@@ -25,7 +25,7 @@ and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-
 * Ensemble Video version of 3.4 or higher.
 * Moodle version 2.5 or higher.
 * Internet Explorer 9 or higher.  No known issues with other browsers.
-* Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/jmpease/moodle-filter_ensemble) for embed code rendering.
+* Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/ensembleVideo/moodle-filter_ensemble) for embed code rendering.
 
 ### <a id="git_install"></a>Installing from Git
 
@@ -34,7 +34,7 @@ for [installing contributed extensions via Git](http://docs.moodle.org/25/en/Git
 
     $ cd /path/to/your/moodle
     $ cd repository
-    $ git clone https://github.com/jmpease/moodle-repository_ensemble.git ensemble
+    $ git clone https://github.com/ensembleVideo/moodle-repository_ensemble.git ensemble
     $ cd ensemble
     $ git checkout -b MOODLE_25_STABLE origin/MOODLE_25_STABLE
 
@@ -53,7 +53,7 @@ and click _Upgrade Moodle database now_ to upgrade the plugin.
 
 ### <a id="zip_install"></a>Installing from ZIP
 
-    $ wget https://github.com/jmpease/moodle-repository_ensemble/archive/MOODLE_25_STABLE.zip
+    $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_25_STABLE.zip
     $ unzip MOODLE_25_STABLE.zip
     $ mv moodle-repository_ensemble-MOODLE_25_STABLE /path/to/your/moodle/repository/ensemble
 

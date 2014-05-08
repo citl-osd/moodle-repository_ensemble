@@ -23,7 +23,7 @@ and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-
 ### <a id="req"></a>Requirements
 
 * Ensemble Video version of 3.4 or higher.
-* Moodle version 2.3 or higher.
+* Moodle version 2.4 or higher.
 * Internet Explorer 9 or higher.  No known issues with other browsers.
 * Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/ensembleVideo/moodle-filter_ensemble) for embed code rendering.
 

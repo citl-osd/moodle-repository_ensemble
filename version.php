@@ -26,8 +26,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version        = 2014050700;
-$plugin->release        = '2.6 (Build: 2014050700)';
+// You are on the MOODLE_26_STABLE branch.  Do NOT update the version
+// branching date rather update the release increment.
+$plugin->version        = 2014050701;
+$plugin->release        = '2.6 (Build: 2014050701)';
 $plugin->maturity       = MATURITY_STABLE;
 $plugin->requires       = 2013111800;
 $plugin->component      = 'repository_ensemble';

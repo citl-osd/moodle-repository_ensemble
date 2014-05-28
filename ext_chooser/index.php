@@ -93,8 +93,7 @@ $path           = ($path === '/' ? '' : $path);
                         content = _.extend({}, settings.content),
                         title = '',
                         thumbnail = '',
-                        editor = window.parent.tinymce.activeEditor,
-                        beforeSet = editor.selection.onBeforeSetContent,
+                        editor = window.parent.tinymce ? window.parent.tinymce.activeEditor : null,
                         filepicker = window.parent.M.core_filepicker.active_filepicker;
 
                     title = content.Title || content.Name;
@@ -105,29 +104,37 @@ $path           = ($path === '/' ? '' : $path);
                     // Don't bother storing search either
                     delete settings['search'];
 
-                    // Content to insert into editor
-                    var html =
-                        '<a class="mceNonEditable" href="' + ensembleUrl + '?' + $.param(settings) + '">' +
-                        '  <img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/>' +
-                        '</a>';
+                    if (editor) {
+                        // Content to insert into editor
+                        var html =
+                            '<a class="mceNonEditable" href="' + ensembleUrl + '?' + $.param(settings) + '">' +
+                            '  <img class="ev-thumb" title="' + title + '" src="' + thumbnail + '"/>' +
+                            '</a>';
 
-                    // Add our content directly into the editor...bypassing unnecessary/unused filepicker screens
-                    editor.execCommand('mceInsertContent', false, html);
+                        // Add our content directly into the editor...bypassing unnecessary/unused filepicker screens
+                        editor.execCommand('mceInsertContent', false, html);
 
-                    // Close the filepicker
-                    filepicker.mainui.hide();
+                        // Close the filepicker
+                        filepicker.mainui.hide();
 
-                    // Close tinymce popups
-                    _.each(editor.windowManager.windows, function(w) {
-                        var frameId = '', frame;
-                        if (w.iframeElement) {
-                            frameId = w.iframeElement.id;
-                        }
-                        frame = window.parent.document.getElementById(frameId);
-                        if (frame && frame.contentWindow) {
-                            editor.windowManager.close(frame.contentWindow);
-                        }
-                    });
+                        // Close tinymce popups
+                        _.each(editor.windowManager.windows, function(w) {
+                            var frameId = '', frame;
+                            if (w.iframeElement) {
+                                frameId = w.iframeElement.id;
+                            }
+                            frame = window.parent.document.getElementById(frameId);
+                            if (frame && frame.contentWindow) {
+                                editor.windowManager.close(frame.contentWindow);
+                            }
+                        });
+                    } else {
+                        filepicker.select_file({
+                            title: title + '.avi',
+                            source: ensembleUrl + '?' + $.param(settings),
+                            thumbnail: thumbnail
+                        });
+                    }
 
                     e.preventDefault();
                 };

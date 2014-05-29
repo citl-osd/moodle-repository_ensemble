@@ -23,20 +23,20 @@ and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-
 ### <a id="req"></a>Requirements
 
 * Ensemble Video version of 3.4 or higher.
-* Moodle version 2.6 or higher.
+* Moodle version 2.7 or higher.
 * Internet Explorer 9 or higher.  No known issues with other browsers.
 * Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/ensembleVideo/moodle-filter_ensemble) for embed code rendering.
 
 ### <a id="git_install"></a>Installing from Git
 
 These installation instructions are based off the strategy endorsed by Moodle
-for [installing contributed extensions via Git](http://docs.moodle.org/26/en/Git_for_Administrators#Installing_a_contributed_extension_from_its_Git_repository).
+for [installing contributed extensions via Git](http://docs.moodle.org/27/en/Git_for_Administrators#Installing_a_contributed_extension_from_its_Git_repository).
 
     $ cd /path/to/your/moodle
     $ cd repository
     $ git clone https://github.com/ensembleVideo/moodle-repository_ensemble.git ensemble
     $ cd ensemble
-    $ git checkout -b MOODLE_26_STABLE origin/MOODLE_26_STABLE
+    $ git checkout -b MOODLE_27_STABLE origin/MOODLE_27_STABLE
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
 and click _Upgrade Moodle database now_ to install the plugin.
@@ -53,9 +53,9 @@ and click _Upgrade Moodle database now_ to upgrade the plugin.
 
 ### <a id="zip_install"></a>Installing from ZIP
 
-    $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_26_STABLE.zip
-    $ unzip MOODLE_26_STABLE.zip
-    $ mv moodle-repository_ensemble-MOODLE_26_STABLE /path/to/your/moodle/repository/ensemble
+    $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_27_STABLE.zip
+    $ unzip MOODLE_27_STABLE.zip
+    $ mv moodle-repository_ensemble-MOODLE_27_STABLE /path/to/your/moodle/repository/ensemble
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
 and click _Upgrade Moodle database now_ to install the plugin.
@@ -86,23 +86,32 @@ _https://server.myschool.edu/ensemble_.
 
 ##### Service Account Username (optional)
 
-Optional.  If left empty, users of the repository will be prompted to
-authenticate with their Ensemble Video credentials. Otherwise, this can be set
-to a "service account" (an Ensemble Video account with a "System Administrator"
+**Optional**.  If left empty, users of the repository will be prompted to
+authenticate with their Ensemble Video built-in account credentials.  Otherwise,
+this can be set to a "service account" (an Ensemble Video account with a "System
+Administrator", "Institution Administrator" or "Organization Administrator"
 role) that has access to all content for your Moodle user population within
-Ensemble Video.  The plugin will use this account to query the Ensemble Video
+Ensemble Video. The plugin will use this account to query the Ensemble Video
 API, but will filter results by the username of the currently logged in Moodle
 user.  With this approach users won't have to authenticate to Ensemble Video,
 but it does imply that Moodle and Ensemble Video usernames match.
 
+**Please note** that this is **required** if the corresponding Ensemble Video
+account is tied to an external Identity Provider such as LDAP or Shibboleth. The
+authentication prompt mentioned above uses basic authentication and will only
+work for Ensemble Video accounts tied to a built-in Identity Provider.
+
 ##### Service Account Password (optional)
 
-Optional.  Used along with the Service Account Username as the credentials used
-to query the Ensemble Video API.  See above.
+**Optional**.  Used along with the *Service Account Username* as the credentials
+used to query the Ensemble Video API.  See above.
 
 ##### Ensemble Account Domain (optional)
 
-Optional.  Used to specify an Ensemble Video authentication domain to be used
-when filtering results by Moodle username.  This is only used when the Service
-Account Username is set and is appended to the currently authenticated Moodle
-username.
+**Optional**.  Used to specify the domain of the Identity Provider to be used
+when filtering results by Moodle username.  This is only used when the *Service
+Account Username* is set, and is passed along with the currently authenticated
+Moodle username.  Necessary when the Moodle username is not fully
+domain-qualified, and corresponds to an Ensemble Video account that uses an
+external Identity Provider such as Shibboleth or LDAP.  This value must match
+the domain value configured for the corresponding Identity Provider.

@@ -30,7 +30,7 @@ and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-
 ### <a id="git_install"></a>Installing from Git
 
 These installation instructions are based off the strategy endorsed by Moodle
-for [installing contributed extensions via Git](http://docs.moodle.org/27/en/Git_for_Administrators#Installing_a_contributed_extension_from_its_Git_repository).
+for [installing contributed extensions via Git](http://docs.moodle.org/28/en/Git_for_Administrators#Installing_a_contributed_extension_from_its_Git_repository).
 
     $ cd /path/to/your/moodle
     $ cd repository

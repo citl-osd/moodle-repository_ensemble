@@ -23,7 +23,7 @@ and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-
 ### <a id="req"></a>Requirements
 
 * Ensemble Video version of 3.4 or higher.
-* Moodle version 2.7 or higher.
+* Moodle version 2.8 or higher.
 * Internet Explorer 9 or higher.  No known issues with other browsers.
 * Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/ensembleVideo/moodle-filter_ensemble) for embed code rendering.
 
@@ -36,7 +36,7 @@ for [installing contributed extensions via Git](http://docs.moodle.org/27/en/Git
     $ cd repository
     $ git clone https://github.com/ensembleVideo/moodle-repository_ensemble.git ensemble
     $ cd ensemble
-    $ git checkout -b MOODLE_27_STABLE origin/MOODLE_27_STABLE
+    $ git checkout -b MOODLE_28_STABLE origin/MOODLE_28_STABLE
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
 and click _Upgrade Moodle database now_ to install the plugin.
@@ -53,9 +53,9 @@ and click _Upgrade Moodle database now_ to upgrade the plugin.
 
 ### <a id="zip_install"></a>Installing from ZIP
 
-    $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_27_STABLE.zip
-    $ unzip MOODLE_27_STABLE.zip
-    $ mv moodle-repository_ensemble-MOODLE_27_STABLE /path/to/your/moodle/repository/ensemble
+    $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_28_STABLE.zip
+    $ unzip MOODLE_28_STABLE.zip
+    $ mv moodle-repository_ensemble-MOODLE_28_STABLE /path/to/your/moodle/repository/ensemble
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
 and click _Upgrade Moodle database now_ to install the plugin.

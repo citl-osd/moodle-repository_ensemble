@@ -43,9 +43,9 @@ $path           = ($path === '/' ? '' : $path);
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ensemble Video External File Chooser</title>
-    <link rel="stylesheet" href="css/jquery-ui/jquery-ui.min.css?v=1.8.3">
-    <link rel="stylesheet" href="css/plupload/jquery.plupload.queue/css/jquery.plupload.queue.css?v=1.5.7">
-    <link rel="stylesheet" href="css/ev-script.css?v=20140507">
+    <link rel="stylesheet" href="css/jquery-ui/jquery-ui.min.css?v=1.11.3">
+    <link rel="stylesheet" href="css/plupload/jquery.plupload.queue/css/jquery.plupload.queue.css?v=2.1.2">
+    <link rel="stylesheet" href="css/ev-script.css?v=20150304">
     <link rel="stylesheet" href="css/style.css?v=3">
   </head>
   <body>
@@ -55,16 +55,14 @@ $path           = ($path === '/' ? '' : $path);
         <input name="submit" class="submit" type="submit" value="Save" style="display:none;" />
       </fieldset>
     </form>
-    <script src="js/jquery/jquery.min.js?v=1.8.3"></script>
-    <script src="js/jquery-ui/jquery-ui.min.js?v=1.8.23"></script>
-    <script src="js/jquery.cookie/jquery.cookie.js?v=1.3.1"></script>
-    <script src="js/lodash/lodash.underscore.min.js?v=1.1.1"></script>
-    <script src="js/backbone/backbone-min.js?v=1.0.0"></script>
-    <script src="js/plupload/plupload.js?v=1.5.7"></script>
-    <script src="js/plupload/plupload.html5.js?v=1.5.7"></script>
-    <script src="js/plupload/plupload.flash.js?v=1.5.7"></script>
-    <script src="js/plupload/jquery.plupload.queue/jquery.plupload.queue.js?v=1.5.7"></script>
-    <script src="js/ev-script/ev-script.min.js?v=20140507"></script>
+    <script src="js/jquery/jquery.min.js?v=2.1.3"></script>
+    <script src="js/jquery-ui/jquery-ui.min.js?v=1.11.3"></script>
+    <script src="js/jquery.cookie/jquery.cookie.js?v=1.4.1"></script>
+    <script src="js/lodash/lodash.min.js?v=3.3.1"></script>
+    <script src="js/backbone/backbone-min.js?v=1.1.2"></script>
+    <script src="js/plupload/plupload.full.min.js?v=2.1.2"></script>
+    <script src="js/plupload/jquery.plupload.queue/jquery.plupload.queue.min.js?v=2.1.2"></script>
+    <script src="js/ev-script/ev-script.min.js?v=20150304"></script>
     <script type="text/javascript">
         (function($) {
 
@@ -130,7 +128,7 @@ $path           = ($path === '/' ? '' : $path);
                         });
                     } else {
                         filepicker.select_file({
-                            title: title + '.avi',
+                            title: title + '.mp4',
                             source: ensembleUrl + '?' + $.param(settings),
                             thumbnail: thumbnail
                         });

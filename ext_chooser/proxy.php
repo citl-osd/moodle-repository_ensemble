@@ -54,7 +54,7 @@ if (!empty($serviceUser)) {
 
 // Only service requests for our configured ensemble url
 if (preg_match('#^' . preg_quote($ensembleUrl) . '#i', $api_url) !== 1) {
-  header('Bad Request', true, 400);
+  header('HTTP/1.1 400 Bad Request');
   print('URL mismatch');
   exit;
 }
@@ -79,7 +79,7 @@ foreach ($response->getHeaders() as $header => $value) {
 }
 
 // Set response status.
-header($response->getMessage(), true, $response->getStatus());
+header('HTTP/1.1 ' . $response->getStatus() . ' ' . $response->getMessage());
 
 // Print actual data.
 print $response->getBody();

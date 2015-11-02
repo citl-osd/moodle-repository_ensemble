@@ -52,14 +52,32 @@ if (!empty($serviceUser)) {
   $filter = false;
 }
 
-// Only service requests for our configured ensemble url
+// Only allow service requests for our configured ensemble url
 if (preg_match('#^' . preg_quote($ensembleUrl) . '#i', $api_url) !== 1) {
   header('HTTP/1.1 400 Bad Request');
   print('URL mismatch');
   exit;
 }
 
-$client = new Zend_Http_Client($api_url);
+// Handle proxy server configuration if used
+if (!empty($CFG->proxyhost) && !is_proxybypass($api_url)) {
+  $config = array(
+    'adapter'     => 'Zend_Http_Client_Adapter_Curl',
+    //'curloptions' => array(CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => false),
+    'proxy_host'  => $CFG->proxyhost,
+    'proxy_user'  => !empty($CFG->proxyuser) ? $CFG->proxyuser : null,
+    'proxy_pass'  => !empty($CFG->proxypassword) ? $CFG->proxypassword : null
+  );
+
+  if (!empty($CFG->proxyport)) {
+    $config['proxy_port'] = $CFG->proxyport;
+  }
+
+  $client = new Zend_Http_Client($api_url, $config);
+} else {
+  $client = new Zend_Http_Client($api_url);
+}
+
 $client->setHeaders('Authorization', 'Basic ' . base64_encode($username . ':' . $password));
 
 // Append user filter for currently logged in Moodle user (if we're using a service account)

@@ -14,25 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
- * Ensemble Video repository plugin.
- *
- * @package    repository_ensemble
- * @copyright  2012 Liam Moran, Nathan Baxley, University of Illinois
- *             2013 Symphony Video, Inc.
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @param int $oldversion the version we are upgrading from
+ * @return bool result
  */
+function xmldb_repository_ensemble_upgrade($oldversion) {
+    global $CFG, $DB;
 
-defined('MOODLE_INTERNAL') || die();
+    $dbman = $DB->get_manager();
 
-$capabilities = array(
-  'repository/ensemble:view' => array(
-    'captype' => 'read',
-    'contextlevel' => CONTEXT_MODULE,
-    'archetypes' => array(
-      'user' => CAP_ALLOW
-    )
-  )
-);
+    if ($oldversion < 2016032100) {
+        require_once($CFG->dirroot.'/repository/lib.php');
+        $existing = $DB->get_record('repository', array('type' => 'ensemble'), '*', IGNORE_MULTIPLE);
 
+        if ($existing) {
+            $ensemble_repo = new repository_type('ensemble', array(), true);
+            $ensemble_repo->delete();
+        }
+
+        upgrade_plugin_savepoint(true, 2016032100, 'repository', 'ensemble');
+    }
+
+    return true;
+}

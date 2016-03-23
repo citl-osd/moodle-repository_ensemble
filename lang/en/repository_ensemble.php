@@ -24,20 +24,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['video']            = 'Video';
-$string['playlist']         = 'Playlist';
-$string['videoRepo']        = 'Ensemble Videos';
-$string['playlistRepo']     = 'Ensemble Playlists';
-$string['pluginname']       = 'Ensemble Video repository';
-$string['configplugin']     = 'Ensemble Video repository configuration';
-$string['ensemble:view']    = 'Use Ensemble Video repository in file picker';
-$string['ensembleURL']      = 'Ensemble URL';
-$string['ensembleURLHelp']  = '<div>The URL for the application root of your Ensemble Video installation, e.g. "https://cloud.ensemblevideo.com" or "https://server.myschool.edu/ensemble"</div>';
-$string['serviceUser']      = 'Service Account Username';
-$string['serviceUserHelp']  = '<div>The Ensemble Video service account username. This account must have a "System Administrator" role within Ensemble.  Note: Do not include authentication domain here. Use the field below.</div>';
-$string['servicePass']      = 'Service Account Password';
-$string['servicePassHelp']  = '<div>The Ensemble Video service account password.</div>';
-$string['authDomain']       = 'Ensemble Account Domain';
-$string['authDomainHelp']   = '<div>(Optional) Authentication domain used when logging in to Ensemble Video.  Only used when a service account is configured above.  This should be set to the value selected in the "Domain" dropdown when authenticating to Ensemble Video, if required (otherwise leave this empty).</div>';
-$string['type']             = 'Repository Type';
-$string['typeHelp']         = '<div>The type of Ensemble Video content this repository makes available.</div>';
+$string['pluginname']           = 'Ensemble Video repository';
+$string['configplugin']         = 'Ensemble Video repository configuration';
+$string['ensemble:view']        = 'Use Ensemble Video repository in file picker';
+$string['ensembleURL']          = 'Ensemble URL';
+$string['ensembleURLHelp']      = '<div>The URL for the application root of your Ensemble Video installation, e.g. "https://cloud.ensemblevideo.com" or "https://ensemble.myschool.edu".</div>';
+$string['consumerKey']          = 'Consumer Key';
+$string['consumerKeyHelp']      = '<div>The LTI Consumer Key.</div>';
+$string['sharedSecret']         = 'Shared Secret';
+$string['sharedSecretHelp']     = '<div>The LTI Shared Secret.</div>';
+$string['additionalParams']     = 'Additional Parameters';
+$string['additionalParamsHelp'] = '<div>(Optional) Any additional custom LTI parameters.</div>';

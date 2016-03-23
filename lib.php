@@ -26,80 +26,53 @@
 
 class repository_ensemble extends repository {
 
-  public static function get_instance_option_names() {
-    return array('evtype');
-  }
-
-  public static function instance_config_form($mform) {
-    $mform->addElement('select', 'evtype', get_string('type', 'repository_ensemble'), array('video' => get_string('video', 'repository_ensemble'), 'playlist' => get_string('playlist', 'repository_ensemble')));
-    $mform->addElement('static', null, '', get_string('typeHelp', 'repository_ensemble'));
-  }
-
-  public static function get_type_option_names() {
-    return array('ensembleURL', 'serviceUser', 'servicePass', 'authDomain');
-  }
-
-  public static function type_config_form($mform, $classname = 'repository') {
-    $ensembleURL = get_config('ensemble', 'ensembleURL');
-    if (empty($ensembleURL)){
-      $ensembleURL = '';
-    }
-    $serviceUser = get_config('ensemble', 'serviceUser');
-    if (empty($serviceUser)){
-      $serviceUser = '';
-    }
-    $servicePass = get_config('ensemble', 'servicePass');
-    if (empty($servicePass)){
-      $servicePass = '';
-    }
-    $authDomain = get_config('ensemble', 'authDomain');
-    if (empty($authDomain)){
-      $authDomain = '';
+    public static function get_instance_option_names() {
+        return array('ensembleURL', 'consumerKey', 'sharedSecret', 'additionalParams');
     }
 
-    $required = get_string('required');
-    $mform->addElement('text', 'ensembleURL', get_string('ensembleURL', 'repository_ensemble'), array('value' => $ensembleURL, 'size' => '40'));
-    $mform->setType('ensembleURL', PARAM_URL);
-    $mform->addRule('ensembleURL', $required, 'required', null, 'client');
-    $mform->addElement('static', null, '', get_string('ensembleURLHelp', 'repository_ensemble'));
-    $mform->addElement('text', 'serviceUser', get_string('serviceUser', 'repository_ensemble'), array('value' => $serviceUser, 'size' => '40'));
-    $mform->setType('serviceUser', PARAM_TEXT);
-    $mform->addElement('static', null, '', get_string('serviceUserHelp', 'repository_ensemble'));
-    $mform->addElement('passwordunmask', 'servicePass', get_string('servicePass', 'repository_ensemble'), array('value' => $servicePass, 'size' => '40'));
-    $mform->addElement('static', null, '', get_string('servicePassHelp', 'repository_ensemble'));
-    $mform->addElement('text', 'authDomain', get_string('authDomain', 'repository_ensemble'), array('value' => $authDomain, 'size' => '40'));
-    $mform->setType('authDomain', PARAM_HOST);
-    $mform->addElement('static', null, '', get_string('authDomainHelp', 'repository_ensemble'));
-  }
+    // TODO - additional validation?
+    public static function instance_config_form($mform) {
+        $required = get_string('required');
+        $mform->addElement('text', 'ensembleURL', get_string('ensembleURL', 'repository_ensemble'));
+        $mform->setType('ensembleURL', PARAM_URL);
+        $mform->addRule('ensembleURL', $required, 'required', null, 'client');
+        $mform->addElement('static', null, '', get_string('ensembleURLHelp', 'repository_ensemble'));
+        $mform->addElement('text', 'consumerKey', get_string('consumerKey', 'repository_ensemble'));
+        $mform->setType('consumerKey', PARAM_TEXT);
+        $mform->addElement('static', null, '', get_string('consumerKeyHelp', 'repository_ensemble'));
+        $mform->addElement('passwordunmask', 'sharedSecret', get_string('sharedSecret', 'repository_ensemble'));
+        $mform->addElement('static', null, '', get_string('sharedSecretHelp', 'repository_ensemble'));
+        $mform->addElement('textarea', 'additionalParams', get_string('additionalParams', 'repository_ensemble'), 'rows="10" cols="100"');
+        $mform->setType('additionalParams', PARAM_TEXT);
+        $mform->addElement('static', null, '', get_string('additionalParamsHelp', 'repository_ensemble'));
+    }
 
-  public static function plugin_init() {
-    $videoRepoId = repository::static_function('ensemble', 'create', 'ensemble', 0, get_system_context(), array('name' => get_string('videoRepo', 'repository_ensemble'), 'evtype' => 'video'), 0);
-    $playlistRepoId = repository::static_function('ensemble', 'create', 'ensemble', 0, get_system_context(), array('name' => get_string('playlistRepo', 'repository_ensemble'), 'evtype' => 'playlist'), 0);
-    return !empty($videoRepoId) && !empty($playlistRepoId);
-  }
+    public function __construct($repositoryid, $context = SYSCONTEXTID, $options = array()) {
+        parent::__construct($repositoryid, $context, $options);
+    }
 
-  public function __construct($repositoryid, $context = SYSCONTEXTID, $options = array()) {
-    parent::__construct($repositoryid, $context, $options);
-  }
+    public function get_listing($path='', $page='0') {
+        global $CFG;
+         
+        $url = new moodle_url('/repository/ensemble/launch.php', array(
+                        'repo_id' => $this->id
+        ));
 
-  public function get_listing($path='', $page='0') {
-    global $CFG;
-    $list = array();
-    $list['object'] = array();
-    $list['object']['type'] = 'text/html';
-    $list['object']['src'] = $CFG->wwwroot . '/repository/ensemble/ext_chooser/index.php?type=' . $this->options['evtype'];
-    $list['nologin']  = true;
-    $list['nosearch'] = true;
-    $list['norefresh'] = true;
-    return $list;
-  }
+        $list = array();
+        $list['object'] = array();
+        $list['object']['type'] = 'text/html';
+        $list['object']['src'] = $url->out(false);
+        $list['nologin']  = true;
+        $list['nosearch'] = true;
+        $list['norefresh'] = true;
+        return $list;
+    }
 
-  public function supported_filetypes() {
-    return '*';
-  }
+    public function supported_filetypes() {
+        return '*';
+    }
 
-  public function supported_returntypes() {
-    return FILE_EXTERNAL;
-  }
-
+    public function supported_returntypes() {
+        return FILE_EXTERNAL;
+    }
 }

@@ -27,26 +27,26 @@
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once(dirname(dirname(__FILE__)) . '/lib.php');
 
-$defaultThumb = new moodle_url('repository/ensemble/ext_chooser/css/images/playlist.png');
+$defaultthumb = new moodle_url('repository/ensemble/ext_chooser/css/images/playlist.png');
 
 $content        = required_param('content', PARAM_RAW);
 $title          = required_param('title', PARAM_TEXT);
-$repo_id        = required_param('repo_id', PARAM_INT);
-$thumbnailUrl   = optional_param('thumbnail', $defaultThumb->out(true), PARAM_URL);
+$repoid         = required_param('repo_id', PARAM_INT);
+$thumbnailurl   = optional_param('thumbnail', $defaultthumb->out(true), PARAM_URL);
 
-$repo = repository::get_instance($repo_id);
+$repo = repository::get_instance($repoid);
 if (!$repo) {
     error("Invalid repository id");
 }
 require_login($repo->context);
 require_capability('repository/ensemble:view', $repo->context);
 
-$contentUrlUrl = new moodle_url($repo->get_option('ensembleURL'), array(
+$contenturlurl = new moodle_url($repo->get_option('ensembleURL'), array(
                 'content' => urlencode($content)
 ));
-$contentUrl = $contentUrlUrl->out(true);
+$contenturl = $contenturlurl->out(true);
 
-$js =<<<EOD
+$js = <<<EOD
 <html>
 <head>
     <script type="text/javascript">
@@ -54,8 +54,8 @@ $js =<<<EOD
 
         filepicker.select_file({
             title: '{$title}.mp4',
-            source: '{$contentUrl}',
-            thumbnail: '{$thumbnailUrl}'
+            source: '{$contenturl}',
+            thumbnail: '{$thumbnailurl}'
         });
     </script>
 </head>

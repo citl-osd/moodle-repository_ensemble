@@ -28,8 +28,8 @@ function xmldb_repository_ensemble_upgrade($oldversion) {
         $existing = $DB->get_record('repository', array('type' => 'ensemble'), '*', IGNORE_MULTIPLE);
 
         if ($existing) {
-            $ensemble_repo = new repository_type('ensemble', array(), true);
-            $ensemble_repo->delete();
+            $repo = new repository_type('ensemble', array(), true);
+            $repo->delete();
         }
 
         upgrade_plugin_savepoint(true, 2016032100, 'repository', 'ensemble');

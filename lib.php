@@ -42,18 +42,15 @@ class repository_ensemble extends repository {
         $mform->addElement('static', null, '', get_string('consumerKeyHelp', 'repository_ensemble'));
         $mform->addElement('passwordunmask', 'sharedSecret', get_string('sharedSecret', 'repository_ensemble'));
         $mform->addElement('static', null, '', get_string('sharedSecretHelp', 'repository_ensemble'));
-        $mform->addElement('textarea', 'additionalParams', get_string('additionalParams', 'repository_ensemble'), 'rows="10" cols="100"');
+        $mform->addElement('textarea', 'additionalParams', get_string('additionalParams', 'repository_ensemble'),
+                        'rows="10" cols="100"');
         $mform->setType('additionalParams', PARAM_TEXT);
         $mform->addElement('static', null, '', get_string('additionalParamsHelp', 'repository_ensemble'));
     }
 
-    public function __construct($repositoryid, $context = SYSCONTEXTID, $options = array()) {
-        parent::__construct($repositoryid, $context, $options);
-    }
-
     public function get_listing($path='', $page='0') {
         global $CFG;
-         
+
         $url = new moodle_url('/repository/ensemble/launch.php', array(
                         'repo_id' => $this->id
         ));

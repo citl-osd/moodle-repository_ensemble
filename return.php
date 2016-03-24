@@ -32,7 +32,6 @@ $defaultthumb = new moodle_url('repository/ensemble/ext_chooser/css/images/playl
 $content        = required_param('content', PARAM_RAW);
 $title          = required_param('title', PARAM_TEXT);
 $repoid         = required_param('repo_id', PARAM_INT);
-$thumbnailurl   = optional_param('thumbnail', $defaultthumb->out(true), PARAM_URL);
 
 $repo = repository::get_instance($repoid);
 if (!$repo) {
@@ -54,8 +53,7 @@ $js = <<<EOD
 
         filepicker.select_file({
             title: '{$title}.mp4',
-            source: '{$contenturl}',
-            thumbnail: '{$thumbnailurl}'
+            source: '{$contenturl}'
         });
     </script>
 </head>

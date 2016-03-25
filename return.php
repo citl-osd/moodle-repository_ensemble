@@ -29,19 +29,23 @@ require_once(dirname(dirname(__FILE__)) . '/lib.php');
 
 $defaultthumb = new moodle_url('repository/ensemble/ext_chooser/css/images/playlist.png');
 
-$content        = required_param('content', PARAM_RAW);
-$title          = required_param('title', PARAM_TEXT);
-$repoid         = required_param('repo_id', PARAM_INT);
+$content   = required_param('content', PARAM_RAW);
+$title     = required_param('title', PARAM_TEXT);
+$repoid    = required_param('repo_id', PARAM_INT);
+$contextid = required_param('context_id', PARAM_INT);
 
 $repo = repository::get_instance($repoid);
 if (!$repo) {
     error("Invalid repository id");
 }
-require_login($repo->context);
-require_capability('repository/ensemble:view', $repo->context);
+
+require_login();
+
+$context = context::instance_by_id($contextid, true);
+require_capability('repository/ensemble:view', $context);
 
 $contenturlurl = new moodle_url($repo->get_option('ensembleURL'), array(
-                'content' => urlencode($content)
+    'content' => urlencode($content)
 ));
 $contenturl = $contenturlurl->out(true);
 
@@ -53,7 +57,8 @@ $js = <<<EOD
 
         filepicker.select_file({
             title: '{$title}.mp4',
-            source: '{$contenturl}'
+            source: '{$contenturl}',
+            thumbnail: ''
         });
     </script>
 </head>

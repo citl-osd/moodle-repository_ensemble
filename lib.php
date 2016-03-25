@@ -30,7 +30,6 @@ class repository_ensemble extends repository {
         return array('ensembleURL', 'consumerKey', 'sharedSecret', 'additionalParams');
     }
 
-    // TODO - additional validation?
     public static function instance_config_form($mform) {
         $required = get_string('required');
         $mform->addElement('text', 'ensembleURL', get_string('ensembleURL', 'repository_ensemble'));
@@ -43,7 +42,7 @@ class repository_ensemble extends repository {
         $mform->addElement('passwordunmask', 'sharedSecret', get_string('sharedSecret', 'repository_ensemble'));
         $mform->addElement('static', null, '', get_string('sharedSecretHelp', 'repository_ensemble'));
         $mform->addElement('textarea', 'additionalParams', get_string('additionalParams', 'repository_ensemble'),
-                        'rows="10" cols="100"');
+            'rows="10" cols="100"');
         $mform->setType('additionalParams', PARAM_TEXT);
         $mform->addElement('static', null, '', get_string('additionalParamsHelp', 'repository_ensemble'));
     }
@@ -52,7 +51,8 @@ class repository_ensemble extends repository {
         global $CFG;
 
         $url = new moodle_url('/repository/ensemble/launch.php', array(
-                        'repo_id' => $this->id
+            'repo_id' => $this->id,
+            'context_id' => $this->context->id
         ));
 
         $list = array();

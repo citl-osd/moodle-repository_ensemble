@@ -27,18 +27,23 @@ use moodle\mod\lti as lti;
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once(dirname(dirname(__FILE__)) . '/lib.php');
+
 require_once($CFG->libdir . '/moodlelib.php');
 require_once($CFG->dirroot . '/mod/lti/OAuth.php');
 require_once($CFG->dirroot . '/mod/lti/locallib.php');
 
-// TODO - access needs testing.
-$repoid = required_param('repo_id', PARAM_INT);
+$repoid    = required_param('repo_id', PARAM_INT);
+$contextid = required_param('context_id', PARAM_INT);
+
 $repo = repository::get_instance($repoid);
 if (!$repo) {
     error("Invalid repository id");
 }
-require_login($repo->context);
-require_capability('repository/ensemble:view', $repo->context);
+
+require_login();
+
+$context = context::instance_by_id($contextid, true);
+require_capability('repository/ensemble:view', $context);
 
 $launchurl = $repo->get_option('ensembleURL') . '/app/lti/launch.ashx';
 $consumerkey = $repo->get_option('consumerKey');
@@ -47,8 +52,10 @@ $additionalparams = $repo->get_option('additionalParams');
 
 $consumer = new lti\OAuthConsumer($consumerkey, $sharedsecret);
 $request = lti\OAuthRequest::from_consumer_and_token($consumer, false, 'POST', $launchurl);
+// TODO - do I need to check these on return?
 $url = new moodle_url('/repository/ensemble/return.php', array(
-                'repo_id' => $repoid
+    'repo_id' => $repoid,
+    'context_id' => $contextid
 ));
 $returnurl = $url->out(false);
 

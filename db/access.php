@@ -27,12 +27,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
-  'repository/ensemble:view' => array(
-    'captype' => 'read',
-    'contextlevel' => CONTEXT_MODULE,
-    'archetypes' => array(
-      'user' => CAP_ALLOW
+    'repository/ensemble:view' => array(
+        'riskbitmask' => RISK_XSS,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'coursecreator' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        )
     )
-  )
 );
 

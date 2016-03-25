@@ -40,6 +40,7 @@ if (!$repo) {
 }
 
 require_login();
+require_sesskey();
 
 $context = context::instance_by_id($contextid, true);
 require_capability('repository/ensemble:view', $context);

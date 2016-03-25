@@ -52,7 +52,8 @@ class repository_ensemble extends repository {
 
         $url = new moodle_url('/repository/ensemble/launch.php', array(
             'repo_id' => $this->id,
-            'context_id' => $this->context->id
+            'context_id' => $this->context->id,
+            'sesskey' => sesskey()
         ));
 
         $list = array();

@@ -41,6 +41,7 @@ if (!$repo) {
 }
 
 require_login();
+require_sesskey();
 
 $context = context::instance_by_id($contextid, true);
 require_capability('repository/ensemble:view', $context);
@@ -55,7 +56,8 @@ $request = lti\OAuthRequest::from_consumer_and_token($consumer, false, 'POST', $
 // TODO - do I need to check these on return?
 $url = new moodle_url('/repository/ensemble/return.php', array(
     'repo_id' => $repoid,
-    'context_id' => $contextid
+    'context_id' => $contextid,
+    'sesskey' => sesskey()
 ));
 $returnurl = $url->out(false);
 

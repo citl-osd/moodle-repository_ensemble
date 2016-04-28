@@ -176,7 +176,8 @@ single repository instance as well as configuration of instances at the course
 and/or site level.
 
 **Note:** As a result of the above changes, the existing repository instances
-are removed on upgrade to this version and will need to be re-added where appropriate.
+are removed on upgrade to this version and the plugin is disabled.  Re-enable
+the plugin and add repository instances where appropriate.
 
 **Note:** Prior versions allowed access to view the configured site-wide repositories
 to any authenticated user.  This version limits access to configured instances to

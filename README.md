@@ -180,8 +180,8 @@ are removed on upgrade to this version and will need to be re-added where approp
 
 **Note:** Prior versions allowed access to view the configured site-wide repositories
 to any authenticated user.  This version limits access to configured instances to
-the _coursecreator_, _teacher_, _editingteacher_ and _manager_ roles. However, the
-original access is <a href="https://docs.moodle.org/dev/NEWMODULE_Adding_capabilities#archetypes">not removed</a>
+the _coursecreator_, _teacher_, _editingteacher_ and _manager_ roles. However, this
+access is <a href="https://docs.moodle.org/dev/NEWMODULE_Adding_capabilities#archetypes">not granted or removed</a>
 on plugin upgrade.  Therefore it is  **highly recommended** that you explicitly
-<a href="https://docs.moodle.org/30/en/Managing_roles">remove access</a> to the
-_repository/ensemble:view_ capability for the _user_ role.
+<a href="https://docs.moodle.org/30/en/Managing_roles">modify access</a> to the
+_repository/ensemble:view_ capability for these and the original _user_ role.

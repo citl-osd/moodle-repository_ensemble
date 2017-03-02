@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Ensemble Video repository plugin.
  *
@@ -67,7 +69,7 @@ class repository_ensemble extends repository {
     }
 
     public function supported_filetypes() {
-        return '*';
+        return array('video', 'audio');
     }
 
     public function supported_returntypes() {

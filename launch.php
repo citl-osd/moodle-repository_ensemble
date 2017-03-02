@@ -46,6 +46,12 @@ require_sesskey();
 $context = context::instance_by_id($contextid, true);
 require_capability('repository/ensemble:view', $context);
 
+$PAGE->set_pagelayout('embedded');
+$PAGE->set_url(new moodle_url('/repository/ensemble/launch.php'));
+$PAGE->set_context($context);
+
+echo $OUTPUT->header();
+
 $launchurl = $repo->get_option('ensembleURL') . '/app/lti/launch.ashx';
 $consumerkey = $repo->get_option('consumerKey');
 $sharedsecret = $repo->get_option('sharedSecret');
@@ -90,4 +96,37 @@ $request->sign_request(new lti\OAuthSignatureMethod_HMAC_SHA1(), $consumer, fals
 
 $apiurl = $request->get_normalized_http_url();
 
-echo lti_post_launch_html($request->get_parameters(), $apiurl);
+$newparms = $request->get_parameters();
+
+$output = "<form action=\"" . $apiurl . "\" name=\"ltiLaunchForm\" id=\"ltiLaunchForm\"" .
+    " method=\"post\" encType=\"application/x-www-form-urlencoded\">\n";
+// Contruct html for the launch parameters.
+foreach ($newparms as $key => $value) {
+    $key = htmlspecialchars($key);
+    $value = htmlspecialchars($value);
+    $output .= "  <input type=\"hidden\" name=\"{$key}\" value=\"{$value}\"/>\n";
+}
+$output .= "</form>\n";
+
+echo $output;
+
+$warning = get_string('launchWarning', 'repository_ensemble');
+
+$js = <<<EOD
+require(['jquery', 'core/notification'], function(\$, notify) {
+    var \$linkNav = \$('.atto_media .root.nav-tabs .nav-item[data-medium-type="link"]', window.parent.document);
+    if (\$linkNav.length && !(\$linkNav.is('.active') || \$linkNav.has('.active').length)) {
+        notify.addNotification({
+            message: '$warning',
+            type: 'warning',
+            closebutton: false
+        });
+    } else {
+        \$('#ltiLaunchForm').submit();
+    }
+});
+EOD;
+
+$PAGE->requires->js_amd_inline($js);
+
+echo $OUTPUT->footer();

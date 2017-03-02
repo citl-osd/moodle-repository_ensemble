@@ -35,3 +35,4 @@ $string['sharedSecret']         = 'Shared Secret';
 $string['sharedSecretHelp']     = '<div>The LTI Shared Secret.</div>';
 $string['additionalParams']     = 'Additional Parameters';
 $string['additionalParamsHelp'] = '<div>(Optional) Any additional custom LTI parameters.</div>';
+$string['launchWarning']        = 'This repository does not support direct embedding of video or audio files. You must use the "link" type.';

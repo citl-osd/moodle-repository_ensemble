@@ -45,27 +45,27 @@ require_sesskey();
 $context = context::instance_by_id($contextid, true);
 require_capability('repository/ensemble:view', $context);
 
+$PAGE->set_pagelayout('embedded');
+$PAGE->set_url(new moodle_url('/repository/ensemble/return.php'));
+$PAGE->set_context($context);
+
+echo $OUTPUT->header();
+
 $contenturlurl = new moodle_url($repo->get_option('ensembleURL'), array(
     'content' => urlencode($content)
 ));
 $contenturl = $contenturlurl->out(true);
 
 $js = <<<EOD
-<html>
-<head>
-    <script type="text/javascript">
-        var filepicker = window.parent.M.core_filepicker.active_filepicker;
+var filepicker = window.parent.M.core_filepicker.active_filepicker;
 
-        filepicker.select_file({
-            title: '{$title}.mp4',
-            source: '{$contenturl}',
-            thumbnail: ''
-        });
-    </script>
-</head>
-<body>
-</body>
-</html>
+filepicker.select_file({
+    title: '{$title}.mp4',
+    source: '{$contenturl}',
+    thumbnail: ''
+});
 EOD;
 
-die($js);
+$PAGE->requires->js_amd_inline($js);
+
+echo $OUTPUT->footer();

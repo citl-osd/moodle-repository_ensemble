@@ -24,20 +24,20 @@ and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-
 ### <a id="req"></a>Requirements
 
 * Ensemble Video version of 4.3 or higher.
-* Moodle version 3.2 or higher.
+* Moodle version 3.3 or higher.
 * Internet Explorer 9 or higher.  No known issues with other browsers.
 * Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/ensembleVideo/moodle-filter_ensemble) for embed code rendering.
 
 ### <a id="git_install"></a>Installing from Git
 
 These installation instructions are based off the strategy endorsed by Moodle
-for [installing contributed extensions via Git](http://docs.moodle.org/32/en/Git_for_Administrators#Installing_a_contributed_extension_from_its_Git_repository).
+for [installing contributed extensions via Git](http://docs.moodle.org/33/en/Git_for_Administrators#Installing_a_contributed_extension_from_its_Git_repository).
 
     $ cd /path/to/your/moodle
     $ cd repository
     $ git clone https://github.com/ensembleVideo/moodle-repository_ensemble.git ensemble
     $ cd ensemble
-    $ git checkout -b MOODLE_32_STABLE origin/MOODLE_32_STABLE
+    $ git checkout -b MOODLE_33_STABLE origin/MOODLE_33_STABLE
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
 and click _Upgrade Moodle database now_ to install the plugin.
@@ -54,9 +54,9 @@ and click _Upgrade Moodle database now_ to upgrade the plugin.
 
 ### <a id="zip_install"></a>Installing from ZIP
 
-    $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_32_STABLE.zip
-    $ unzip MOODLE_32_STABLE.zip
-    $ mv moodle-repository_ensemble-MOODLE_32_STABLE /path/to/your/moodle/repository/ensemble
+    $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_33_STABLE.zip
+    $ unzip MOODLE_33_STABLE.zip
+    $ mv moodle-repository_ensemble-MOODLE_33_STABLE /path/to/your/moodle/repository/ensemble
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
 and click _Upgrade Moodle database now_ to install the plugin.
@@ -184,5 +184,5 @@ to any authenticated user.  This version limits access to configured instances t
 the _coursecreator_, _teacher_, _editingteacher_ and _manager_ roles. However, this
 access is <a href="https://docs.moodle.org/dev/NEWMODULE_Adding_capabilities#archetypes">not granted or removed</a>
 on plugin upgrade.  Therefore it is  **highly recommended** that you explicitly
-<a href="https://docs.moodle.org/32/en/Managing_roles">modify access</a> to the
+<a href="https://docs.moodle.org/33/en/Managing_roles">modify access</a> to the
 _repository/ensemble:view_ capability for these and the original _user_ role.

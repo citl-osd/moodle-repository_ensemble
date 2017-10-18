@@ -56,11 +56,13 @@ $contenturlurl = new moodle_url($repo->get_option('ensembleURL'), array(
 ));
 $contenturl = $contenturlurl->out(true);
 
+$escapedTitle = str_replace("'", "\'", $title);
+
 $js = <<<EOD
 var filepicker = window.parent.M.core_filepicker.active_filepicker;
 
 filepicker.select_file({
-    title: '{$title}.mp4',
+    title: '{$escapedTitle}.mp4',
     source: '{$contenturl}',
     thumbnail: ''
 });

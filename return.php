@@ -51,10 +51,11 @@ $PAGE->set_context($context);
 
 echo $OUTPUT->header();
 
-$contenturlurl = new moodle_url($repo->get_option('ensembleURL'), array(
+$sourceurl = new moodle_url($repo->get_option('ensembleURL'), array(
     'content' => urlencode($content)
 ));
-$contenturl = $contenturlurl->out(true);
+$source = $sourceurl->out(true);
+$sourcekey = sha1($source . $repo::get_secret_key() . sesskey());
 
 $escapedTitle = str_replace("'", "\'", $title);
 
@@ -63,7 +64,8 @@ var filepicker = window.parent.M.core_filepicker.active_filepicker;
 
 filepicker.select_file({
     title: '{$escapedTitle}.mp4',
-    source: '{$contenturl}',
+    source: '{$source}',
+    sourcekey: '{$sourcekey}',
     thumbnail: ''
 });
 EOD;

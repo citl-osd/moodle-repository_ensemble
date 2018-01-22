@@ -45,10 +45,11 @@ require_sesskey();
 $context = context::instance_by_id($contextid, true);
 require_capability('repository/ensemble:view', $context);
 
-$contenturlurl = new moodle_url($repo->get_option('ensembleURL'), array(
+$sourceurl = new moodle_url($repo->get_option('ensembleURL'), array(
     'content' => urlencode($content)
 ));
-$contenturl = $contenturlurl->out(true);
+$source = $sourceurl->out(true);
+$sourcekey = sha1($source . $repo::get_secret_key() . sesskey());
 
 $js = <<<EOD
 <html>
@@ -58,7 +59,8 @@ $js = <<<EOD
 
         filepicker.select_file({
             title: '{$title}.mp4',
-            source: '{$contenturl}',
+            source: '{$source}',
+            sourcekey: '{$sourcekey}',
             thumbnail: ''
         });
     </script>

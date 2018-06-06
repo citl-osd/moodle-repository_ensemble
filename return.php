@@ -57,13 +57,13 @@ $sourceurl = new moodle_url($repo->get_option('ensembleURL'), array(
 $source = $sourceurl->out(true);
 $sourcekey = sha1($source . $repo::get_secret_key() . sesskey());
 
-$escapedTitle = str_replace("'", "\'", $title);
+$escapedtitle = str_replace("'", "\'", $title);
 
 $js = <<<EOD
 var filepicker = window.parent.M.core_filepicker.active_filepicker;
 
 filepicker.select_file({
-    title: '{$escapedTitle}.mp4',
+    title: '{$escapedtitle}.mp4',
     source: '{$source}',
     sourcekey: '{$sourcekey}',
     thumbnail: ''

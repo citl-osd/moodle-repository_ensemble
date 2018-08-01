@@ -28,7 +28,7 @@ and [Using the Moodle Plugin](http://support.ensemblevideo.com/using-the-moodle-
 * Ensemble Video version of 4.3 or higher.
 * Moodle version 3.5 or higher.
 * Internet Explorer 9 or higher.  No known issues with other browsers.
-* Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/ensembleVideo/moodle-filter_ensemble) for embed code rendering.
+* Depends on the [Ensemble Video Moodle Filter Plugin](https://github.com/citl-osd/moodle-filter_ensemble) for embed code rendering.
 
 ### <a id="git_install"></a>Installing from Git
 
@@ -37,7 +37,7 @@ for [installing contributed extensions via Git](http://docs.moodle.org/35/en/Git
 
     $ cd /path/to/your/moodle
     $ cd repository
-    $ git clone https://github.com/ensembleVideo/moodle-repository_ensemble.git ensemblevideo
+    $ git clone https://github.com/citl-osd/moodle-repository_ensemble.git ensemblevideo
     $ cd ensemblevideo
     $ git checkout -b MOODLE_35_STABLE origin/MOODLE_35_STABLE
 
@@ -56,7 +56,7 @@ and click _Upgrade Moodle database now_ to upgrade the plugin.
 
 ### <a id="zip_install"></a>Installing from ZIP
 
-    $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_35_STABLE.zip
+    $ wget https://github.com/citl-osd/moodle-repository_ensemble/archive/MOODLE_35_STABLE.zip
     $ unzip MOODLE_35_STABLE.zip
     $ mv moodle-repository_ensemble-MOODLE_35_STABLE /path/to/your/moodle/repository/ensemblevideo
 

@@ -27,14 +27,14 @@ function xmldb_repository_ensemble_upgrade($oldversion) {
 
     if ($oldversion < 2016032100) {
         require_once($CFG->dirroot.'/repository/lib.php');
-        $existing = $DB->get_record('repository', array('type' => 'ensemble'), '*', IGNORE_MULTIPLE);
+        $existing = $DB->get_record('repository', array('type' => 'ensemblevideo'), '*', IGNORE_MULTIPLE);
 
         if ($existing) {
-            $repo = new repository_type('ensemble', array(), true);
+            $repo = new repository_type('ensemblevideo', array(), true);
             $repo->delete();
         }
 
-        upgrade_plugin_savepoint(true, 2016032100, 'repository', 'ensemble');
+        upgrade_plugin_savepoint(true, 2016032100, 'repository', 'ensemblevideo');
     }
 
     return true;

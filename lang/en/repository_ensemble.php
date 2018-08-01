@@ -18,7 +18,7 @@
 /**
  * Ensemble Video repository plugin.
  *
- * @package    repository_ensemble
+ * @package    repository_ensemblevideo
  * @copyright  2012 Liam Moran, Nathan Baxley, University of Illinois
  *             2013 Symphony Video, Inc.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -26,7 +26,7 @@
 
 $string['pluginname']           = 'Ensemble Video repository';
 $string['configplugin']         = 'Ensemble Video repository configuration';
-$string['ensemble:view']        = 'Use Ensemble Video repository in file picker';
+$string['ensemblevideo:view']   = 'Use Ensemble Video repository in file picker';
 $string['ensembleURL']          = 'Ensemble URL';
 $string['ensembleURLHelp']      = '<div>The URL for the application root of your Ensemble Video installation, e.g. "https://cloud.ensemblevideo.com" or "https://ensemble.myschool.edu".</div>';
 $string['consumerKey']          = 'Consumer Key';

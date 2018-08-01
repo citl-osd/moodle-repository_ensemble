@@ -20,13 +20,13 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Ensemble Video repository plugin.
  *
- * @package    repository_ensemble
+ * @package    repository_ensemblevideo
  * @copyright  2012 Liam Moran, Nathan Baxley, University of Illinois
  *             2013 Symphony Video, Inc.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-class repository_ensemble extends repository {
+class repository_ensemblevideo extends repository {
 
     public static function get_instance_option_names() {
         return array('ensembleURL', 'consumerKey', 'sharedSecret', 'additionalParams');
@@ -34,25 +34,25 @@ class repository_ensemble extends repository {
 
     public static function instance_config_form($mform) {
         $required = get_string('required');
-        $mform->addElement('text', 'ensembleURL', get_string('ensembleURL', 'repository_ensemble'));
+        $mform->addElement('text', 'ensembleURL', get_string('ensembleURL', 'repository_ensemblevideo'));
         $mform->setType('ensembleURL', PARAM_URL);
         $mform->addRule('ensembleURL', $required, 'required', null, 'client');
-        $mform->addElement('static', null, '', get_string('ensembleURLHelp', 'repository_ensemble'));
-        $mform->addElement('text', 'consumerKey', get_string('consumerKey', 'repository_ensemble'));
+        $mform->addElement('static', null, '', get_string('ensembleURLHelp', 'repository_ensemblevideo'));
+        $mform->addElement('text', 'consumerKey', get_string('consumerKey', 'repository_ensemblevideo'));
         $mform->setType('consumerKey', PARAM_TEXT);
-        $mform->addElement('static', null, '', get_string('consumerKeyHelp', 'repository_ensemble'));
-        $mform->addElement('passwordunmask', 'sharedSecret', get_string('sharedSecret', 'repository_ensemble'));
-        $mform->addElement('static', null, '', get_string('sharedSecretHelp', 'repository_ensemble'));
-        $mform->addElement('textarea', 'additionalParams', get_string('additionalParams', 'repository_ensemble'),
+        $mform->addElement('static', null, '', get_string('consumerKeyHelp', 'repository_ensemblevideo'));
+        $mform->addElement('passwordunmask', 'sharedSecret', get_string('sharedSecret', 'repository_ensemblevideo'));
+        $mform->addElement('static', null, '', get_string('sharedSecretHelp', 'repository_ensemblevideo'));
+        $mform->addElement('textarea', 'additionalParams', get_string('additionalParams', 'repository_ensemblevideo'),
             'rows="10" cols="100"');
         $mform->setType('additionalParams', PARAM_TEXT);
-        $mform->addElement('static', null, '', get_string('additionalParamsHelp', 'repository_ensemble'));
+        $mform->addElement('static', null, '', get_string('additionalParamsHelp', 'repository_ensemblevideo'));
     }
 
     public function get_listing($path='', $page='0') {
         global $CFG;
 
-        $url = new moodle_url('/repository/ensemble/launch.php', array(
+        $url = new moodle_url('/repository/ensemblevideo/launch.php', array(
             'repo_id' => $this->id,
             'context_id' => $this->context->id,
             'sesskey' => sesskey()

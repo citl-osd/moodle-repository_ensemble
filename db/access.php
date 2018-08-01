@@ -18,7 +18,7 @@
 /**
  * Ensemble Video repository plugin.
  *
- * @package    repository_ensemble
+ * @package    repository_ensemblevideo
  * @copyright  2012 Liam Moran, Nathan Baxley, University of Illinois
  *             2013 Symphony Video, Inc.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
-    'repository/ensemble:view' => array(
+    'repository/ensemblevideo:view' => array(
         'riskbitmask' => RISK_XSS,
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,

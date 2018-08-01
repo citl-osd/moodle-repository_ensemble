@@ -32,5 +32,5 @@ $plugin->version        = 2018060600;
 $plugin->release        = '3.5 (Build: 2018060600)';
 $plugin->maturity       = MATURITY_STABLE;
 $plugin->requires       = 2018051700;
-$plugin->component      = 'repository_ensemble';
-$plugin->dependencies   = array('filter_ensemble' => 2018060600);
+$plugin->component      = 'repository_ensemblevideo';
+$plugin->dependencies   = array('filter_ensemblevideo' => 2018060600);

@@ -18,7 +18,7 @@
 /**
  * Ensemble Video repository plugin.
  *
- * @package    repository_ensemble
+ * @package    repository_ensemblevideo
  * @copyright  2013 Symphony Video, Inc.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -44,10 +44,10 @@ require_login();
 require_sesskey();
 
 $context = context::instance_by_id($contextid, true);
-require_capability('repository/ensemble:view', $context);
+require_capability('repository/ensemblevideo:view', $context);
 
 $PAGE->set_pagelayout('embedded');
-$PAGE->set_url(new moodle_url('/repository/ensemble/launch.php'));
+$PAGE->set_url(new moodle_url('/repository/ensemblevideo/launch.php'));
 $PAGE->set_context($context);
 
 echo $OUTPUT->header();
@@ -60,7 +60,7 @@ $additionalparams = $repo->get_option('additionalParams');
 $consumer = new lti\OAuthConsumer($consumerkey, $sharedsecret);
 $request = lti\OAuthRequest::from_consumer_and_token($consumer, false, 'POST', $launchurl);
 // TODO - do I need to check these on return?
-$url = new moodle_url('/repository/ensemble/return.php', array(
+$url = new moodle_url('/repository/ensemblevideo/return.php', array(
     'repo_id' => $repoid,
     'context_id' => $contextid,
     'sesskey' => sesskey()
@@ -110,7 +110,7 @@ $output .= "</form>\n";
 
 echo $output;
 
-$warning = get_string('launchWarning', 'repository_ensemble');
+$warning = get_string('launchWarning', 'repository_ensemblevideo');
 
 $js = <<<EOD
 require(['jquery', 'core/notification'], function(\$, notify) {

@@ -11,6 +11,8 @@ __[Important Upgrade Notes](#upgrade_notes)__<br/>
 
 ### <a id="overview"></a>Overview
 
+CITL OSD Forked this project to allow both the stock vender ensemble plugin and the custom plugin we'd written years ago to coexist on the same moodle instance without collision
+
 Along with the [Ensemble Video Moodle Filter Plugin](https://github.com/ensembleVideo/moodle-filter_ensemble),
 this plugin makes it easier for Moodle users to add videos and playlists to
 content without having to navigate to Ensemble Video and copy/paste complicated
@@ -35,8 +37,8 @@ for [installing contributed extensions via Git](http://docs.moodle.org/35/en/Git
 
     $ cd /path/to/your/moodle
     $ cd repository
-    $ git clone https://github.com/ensembleVideo/moodle-repository_ensemble.git ensemble
-    $ cd ensemble
+    $ git clone https://github.com/ensembleVideo/moodle-repository_ensemble.git ensemblevideo
+    $ cd ensemblevideo
     $ git checkout -b MOODLE_35_STABLE origin/MOODLE_35_STABLE
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
@@ -46,7 +48,7 @@ and click _Upgrade Moodle database now_ to install the plugin.
 
 To upgrade the plugin do the following:
 
-    $ cd /path/to/your/moodle/repository/ensemble
+    $ cd /path/to/your/moodle/repository/ensemblevideo
     $ git pull
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
@@ -56,7 +58,7 @@ and click _Upgrade Moodle database now_ to upgrade the plugin.
 
     $ wget https://github.com/ensembleVideo/moodle-repository_ensemble/archive/MOODLE_35_STABLE.zip
     $ unzip MOODLE_35_STABLE.zip
-    $ mv moodle-repository_ensemble-MOODLE_35_STABLE /path/to/your/moodle/repository/ensemble
+    $ mv moodle-repository_ensemble-MOODLE_35_STABLE /path/to/your/moodle/repository/ensemblevideo
 
 As a Moodle administrator, navigate to _Settings -> Site Administration -> Notifications_
 and click _Upgrade Moodle database now_ to install the plugin.

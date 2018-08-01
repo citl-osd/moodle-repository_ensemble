@@ -18,7 +18,7 @@
 /**
  * Ensemble Video repository plugin.
  *
- * @package    repository_ensemble
+ * @package    repository_ensemblevideo
  * @copyright  2012 Liam Moran, Nathan Baxley, University of Illinois
  *             2013 Symphony Video, Inc.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once(dirname(dirname(__FILE__)) . '/lib.php');
 
-$defaultthumb = new moodle_url('repository/ensemble/ext_chooser/css/images/playlist.png');
+$defaultthumb = new moodle_url('repository/ensemblevideo/ext_chooser/css/images/playlist.png');
 
 $content   = required_param('content', PARAM_RAW);
 $title     = required_param('title', PARAM_TEXT);
@@ -43,10 +43,10 @@ require_login();
 require_sesskey();
 
 $context = context::instance_by_id($contextid, true);
-require_capability('repository/ensemble:view', $context);
+require_capability('repository/ensemblevideo:view', $context);
 
 $PAGE->set_pagelayout('embedded');
-$PAGE->set_url(new moodle_url('/repository/ensemble/return.php'));
+$PAGE->set_url(new moodle_url('/repository/ensemblevideo/return.php'));
 $PAGE->set_context($context);
 
 echo $OUTPUT->header();

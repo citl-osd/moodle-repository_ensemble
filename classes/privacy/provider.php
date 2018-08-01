@@ -27,7 +27,7 @@ namespace repository_ensemble\privacy;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Privacy Subsystem for repository_ensemble implementing null_provider.
+ * Privacy Subsystem for repository_ensemblevideo implementing null_provider.
  *
  * @copyright  2018 Symphony Video, Inc.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
